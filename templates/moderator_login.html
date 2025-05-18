@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header text-white" style="background-color: var(--primary-color);">
+                    <h4 class="mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>Вход для модераторов</span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.username.label(class="form-label fw-medium") }}
+                            {{ form.username(class="form-control") }}
+                            <div class="form-text">Введите ваш логин модератора</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            {{ form.password.label(class="form-label fw-medium") }}
+                            {{ form.password(class="form-control") }}
+                            <div class="form-text">Введите ваш пароль</div>
+                        </div>
+                        
+                        <button type="submit" class="btn w-100" style="background-color: var(--primary-color); color: white;">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: var(--border-radius);
+    }
+    
+    .form-control {
+        border-radius: var(--border-radius);
+        padding: 0.5rem 1rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(20, 66, 122, 0.25);
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .btn {
+        padding: 0.6rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+    
+    .btn:hover {
+        background-color: var(--primary-light) !important;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,18 @@
+# Основные пакеты
+Flask==3.0.2
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.1
+
+# Работа с данными
+SQLAlchemy==2.0.25
+Werkzeug==3.0.1
+python-dotenv==1.0.0  # Для работы с .env файлами
+
+# Для экспорта в Excel
+openpyxl==3.1.2  # Обновленная версия
+
+# Для production
+gunicorn==21.2.0  # WSGI-сервер
+
+# Загрузка файлов (используем современный форк)
+flask-reuploaded==1.2.0  # Вместо устаревшего Flask-Uploads

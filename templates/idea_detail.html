@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Карточка с деталями идеи -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header text-white" style="background-color: var(--primary-color);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-lightbulb"></i> {{ idea.title }}
+                </h2>
+                <a href="{{ url_for('index') }}" class="btn btn-sm" style="background-color: white; color: var(--primary-color);">
+                    <i class="bi bi-arrow-left"></i> Назад
+                </a>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <!-- Мета-информация -->
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
+                    <i class="bi bi-tag"></i> {{ idea.category }}
+                </span>
+                <span class="badge bg-{{ 'success' if idea.status == 'Одобрено' else 'warning' if idea.status == 'На рассмотрении' else 'danger' }}">
+                    {{ idea.status }}
+                </span>
+                {% if idea.author_name %}
+                <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
+                    <i class="bi bi-person"></i> {{ idea.author_name }}
+                </span>
+                {% else %}
+                <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
+                    <i class="bi bi-incognito"></i> Анонимно
+                </span>
+                {% endif %}
+                <span class="badge bg-light text-dark">
+                    <i class="bi bi-calendar"></i> {{ idea.created_at.strftime('%d.%m.%Y') }}
+                </span>
+            </div>
+
+            <!-- Панель действий модератора -->
+            {% if current_moderator %}
+            <div class="moderator-actions mb-4 p-3 rounded" style="background-color: #f0f7ff; border-left: 4px solid var(--primary-color);">
+                <h5 class="d-flex align-items-center gap-2" style="color: var(--primary-color);">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Действия модератора</span>
+                </h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if idea.status != 'Одобрено' %}
+                    <form method="POST" action="{{ url_for('approve_idea', id=idea.id) }}">
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="bi bi-check-circle"></i> Одобрить
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if idea.status != 'Отклонено' %}
+                    <form method="POST" action="{{ url_for('reject_idea', id=idea.id) }}">
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            <i class="bi bi-slash-circle"></i> Отклонить
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('delete_idea', id=idea.id) }}" 
+                          onsubmit="return confirm('Вы уверены, что хотите удалить эту идею?');">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Основное содержание идеи -->
+            <div class="idea-content">
+                <!-- Блок проблемы -->
+                <div class="mb-4">
+                    <h5 class="d-flex align-items-center gap-2" style="color: #dc3545;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span>Проблема</span>
+                    </h5>
+                    <div class="ps-3 border-start border-3 border-danger bg-light bg-opacity-10 p-3 rounded-end">
+                        <p class="mb-0">{{ idea.problem|urlize(target="_blank") }}</p>
+                    </div>
+                </div>
+            
+                <!-- Блок решения -->
+                <div class="mb-4">
+                    <h5 class="d-flex align-items-center gap-2" style="color: #fd7e14;">
+                        <i class="bi bi-lightbulb-fill"></i>
+                        <span>Предлагаемое решение</span>
+                    </h5>
+                    <div class="ps-3 border-start border-3 border-warning bg-light bg-opacity-10 p-3 rounded-end">
+                        <p class="mb-0">{{ idea.solution|urlize(target="_blank") }}</p>
+                    </div>
+                </div>
+            
+                <!-- Блок ожидаемого результата -->
+                <div class="mb-4">
+                    <h5 class="d-flex align-items-center gap-2" style="color: #198754;">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Ожидаемый результат</span>
+                    </h5>
+                    <div class="ps-3 border-start border-3 border-success bg-light bg-opacity-10 p-3 rounded-end">
+                        <p class="mb-0">{{ idea.expected_result|urlize(target="_blank") }}</p>
+                    </div>
+                </div>
+            
+                <!-- Блок дополнительной информации -->
+                {% if idea.description %}
+                <div class="mb-4">
+                    <h5 class="d-flex align-items-center gap-2" style="color: var(--primary-color);">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>Дополнительная информация</span>
+                    </h5>
+                    <div class="ps-3 border-start border-3" style="border-color: var(--primary-color); background-color: rgba(20, 66, 122, 0.05); p-3 rounded-end">
+                        <p class="mb-0">{{ idea.description|urlize(target="_blank") }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            
+                <!-- Блок контактного email (только для модераторов) -->
+                {% if idea.contact_email and current_moderator %}
+                <div class="mb-4">
+                    <h5 class="d-flex align-items-center gap-2" style="color: #6f42c1;">
+                        <i class="bi bi-envelope-fill"></i>
+                        <span>Контактный email</span>
+                    </h5>
+                    <div class="ps-3 border-start border-3 border-purple bg-light bg-opacity-10 p-3 rounded-end">
+                        <p class="mb-0 d-flex align-items-center">
+                            <a href="mailto:{{ idea.contact_email }}" class="text-decoration-none">
+                                <i class="bi bi-envelope me-2"></i>{{ idea.contact_email }}
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary ms-2 py-0 px-2 copy-email" 
+                                    data-email="{{ idea.contact_email }}"
+                                    title="Скопировать email">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Прикрепленные файлы -->
+            {% if idea.attachments %}
+            <div class="mb-4">
+                <h5 class="d-flex align-items-center gap-2" style="color: var(--primary-color);">
+                    <i class="bi bi-paperclip"></i>
+                    <span>Прикрепленные файлы</span>
+                    <span class="badge rounded-pill" style="background-color: var(--primary-color); color: white;">{{ idea.attachments|length }}</span>
+                </h5>
+                <div class="list-group">
+                    {% for attachment in idea.attachments %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-file-earmark me-2"></i>
+                            <span>{{ attachment.filename }}</span>
+                            <small class="text-muted ms-2">
+                                {% if attachment.file_size > 0 %}
+                                    ({{ attachment.file_size|filesizeformat }})
+                                {% else %}
+                                    (размер неизвестен)
+                                {% endif %}
+                            </small>
+                        </div>
+                        <a href="{{ url_for('download_attachment', id=attachment.id) }}" 
+                           class="btn btn-sm" 
+                           style="background-color: var(--primary-color); color: white;"
+                           target="_blank">
+                            <i class="bi bi-download"></i> Скачать
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Блок комментариев (только для модераторов) -->
+    {% if current_moderator %}
+    <div class="card shadow-sm">
+        <div class="card-header" style="background-color: #f0f7ff; color: var(--primary-color);">
+            <h3 class="h5 mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-chat-left-text"></i>
+                <span>Комментарии модераторов</span>
+                {% if comments %}
+                <span class="badge rounded-pill" style="background-color: var(--primary-color); color: white;">{{ comments|length }}</span>
+                {% endif %}
+            </h3>
+        </div>
+        
+        <div class="card-body">
+            {% if comments %}
+                <div class="list-group mb-4">
+                    {% for comment in comments %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="d-flex align-items-center gap-1">
+                                <i class="bi bi-person-fill" style="color: var(--primary-color);"></i>
+                                <strong>{{ comment.author_name }}</strong>
+                            </small>
+                            <small class="text-muted">
+                                {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            </small>
+                        </div>
+                        <p class="mb-0">{{ comment.text }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle"></i> Пока нет комментариев
+                </div>
+            {% endif %}
+            
+            <!-- Форма добавления комментария -->
+            <h5 class="mb-3" style="color: var(--primary-color);">Добавить комментарий</h5>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.text(class="form-control", rows=3, placeholder="Ваш комментарий...", required=True) }}
+                </div>
+                
+                <button type="submit" class="btn" style="background-color: var(--primary-color); color: white;">
+                    <i class="bi bi-send"></i> Отправить
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .idea-content h5 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .list-group-item {
+        transition: background-color 0.2s;
+        border-radius: var(--border-radius) !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .moderator-actions {
+        border-radius: var(--border-radius);
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+    }
+    
+    .border-warning {
+        border-color: #fd7e14 !important;
+    }
+    
+    .border-purple {
+        border-color: #6f42c1 !important;
+    }
+</style>
+
+<script>
+document.querySelectorAll('.copy-email').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const email = this.getAttribute('data-email');
+        navigator.clipboard.writeText(email).then(() => {
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="bi bi-check"></i>';
+            setTimeout(() => {
+                this.innerHTML = originalHTML;
+            }, 2000);
+        });
+    });
+});
+</script>
+{% endblock %}
