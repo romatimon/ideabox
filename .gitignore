@@ -12,3 +12,5 @@ log.log
 __pycache__/
 
 uploads/
+
+instance/
