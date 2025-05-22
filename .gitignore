@@ -1,0 +1,12 @@
+# Environments
+.env
+.venv
+env/
+venv/
+
+.log
+log.log
+
+.db
+
+__pycache__/
