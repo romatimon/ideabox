@@ -36,14 +36,6 @@
                 </div>
                 
                 <div class="mb-3">
-                    {{ form.expected_result.label(class="form-label fw-medium") }}
-                    {{ form.expected_result(class="form-control", rows=3) }}
-                    {% for error in form.expected_result.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                
-                <div class="mb-3">
                     {{ form.description.label(class="form-label fw-medium") }}
                     {{ form.description(class="form-control", rows=3) }}
                     {% for error in form.description.errors %}
@@ -56,6 +48,47 @@
                     {{ form.status(class="form-select") }}
                 </div>
 
+                <div class="mb-3">
+                    {{ form.moderator_feedback.label(class="form-label fw-medium") }}
+                    {{ form.moderator_feedback(class="form-control", rows=4) }}
+                    {% for error in form.moderator_feedback.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                                
+                <!-- После основных полей -->
+                <div class="card mt-3">
+                    <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                        <h5>Быстрая оценка</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.cost.label(class="form-label") }}
+                                {{ form.cost(class="form-select") }}
+                                {% for error in form.cost.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.complexity.label(class="form-label") }}
+                                {{ form.complexity(class="form-select") }}
+                                {% for error in form.complexity.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.duration.label(class="form-label") }}
+                                {{ form.duration(class="form-select") }}
+                                {% for error in form.duration.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p></p>
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('idea_detail', id=idea.id) }}" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left"></i> Назад
@@ -69,3 +102,4 @@
     </div>
 </div>
 {% endblock %}
+
