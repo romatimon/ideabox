@@ -71,17 +71,17 @@ def inject_moderator():
 def init_moderators():
     moderators = [
         {
-            'username': 'vlasuk', 
-            'first_name': 'Ольга', 
-            'last_name': 'Власюк',
-            'password': 'super123',
+            'username': '', 
+            'first_name': '', 
+            'last_name': '',
+            'password': '',
             'can_manage_categories': True
         },
         {
-            'username': 'schekoldina', 
-            'first_name': 'Анастасия', 
-            'last_name': 'Щеколдина',
-            'password': 'super456',
+            'username': '', 
+            'first_name': '', 
+            'last_name': '',
+            'password': '',
             'can_manage_categories': True
         }
     ]
@@ -643,4 +643,5 @@ if __name__ == '__main__':
         db.create_all()
         init_moderators()
         init_categories()
+
     app.run(debug=True)
