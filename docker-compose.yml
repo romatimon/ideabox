@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  ideas-app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ideas_uploads:/app/uploads
+      - ideas_database:/app/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  ideas_uploads:
+  ideas_database:

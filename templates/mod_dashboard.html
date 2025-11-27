@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header text-white" style="background-color: var(--primary-color);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Личный кабинет модератора</h2>
+                <a href="{{ url_for('stats') }}" class="btn btn-sm" style="background-color: white; color: var(--primary-color);">
+                    <i class="bi bi-graph-up"></i> Статистика
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <h3 class="h4 mb-3" style="color: var(--primary-color);">Все идеи</h3>
+            
+            <!-- Фильтры -->
+            <div class="mb-4">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <select name="published" class="form-select">
+                            <option value="all" {% if request.args.get('published') == 'all' %}selected{% endif %}>Все публикации</option>
+                            <option value="published" {% if request.args.get('published') == 'published' %}selected{% endif %}>Опубликованные</option>
+                            <option value="unpublished" {% if request.args.get('published') == 'unpublished' %}selected{% endif %}>Неопубликованные</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <select name="status" class="form-select">
+                            <option value="all" {% if request.args.get('status') == 'all' %}selected{% endif %}>Все статусы</option>
+                            <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>На рассмотрении</option>
+                            <option value="approved" {% if request.args.get('status') == 'approved' %}selected{% endif %}>Одобрено</option>
+                            <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>В работе</option>
+                            <option value="implemented" {% if request.args.get('status') == 'implemented' %}selected{% endif %}>Реализовано</option>
+                            <option value="rejected" {% if request.args.get('status') == 'rejected' %}selected{% endif %}>Отклонено</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <select name="category" class="form-select">
+                            <option value="all" {% if request.args.get('category') == 'all' %}selected{% endif %}>Все категории</option>
+                            {% for category in categories %}
+                            <option value="{{ category.name }}" {% if request.args.get('category') == category.name %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <button type="submit" class="btn w-100" style="background-color: var(--primary-color); color: white;">
+                            <i class="bi bi-funnel"></i> Применить
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Таблица с идеями -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <a href="{{ url_for('mod_dashboard', 
+                                    status=request.args.get('status', 'all'),
+                                    published=request.args.get('published', 'all'),
+                                    category=request.args.get('category', 'all'),
+                                    sort='id',
+                                    dir='asc' if sort_field != 'id' or sort_direction == 'desc' else 'desc'
+                                ) }}" class="text-decoration-none text-dark">
+                                    ID
+                                    {% if sort_field == 'id' %}
+                                        <i class="bi bi-caret-{% if sort_direction == 'asc' %}up{% else %}down{% endif %}-fill"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ url_for('mod_dashboard', 
+                                    status=request.args.get('status', 'all'),
+                                    published=request.args.get('published', 'all'),
+                                    category=request.args.get('category', 'all'),
+                                    sort='title',
+                                    dir='asc' if sort_field != 'title' or sort_direction == 'desc' else 'desc'
+                                ) }}" class="text-decoration-none text-dark">
+                                    Название
+                                    {% if sort_field == 'title' %}
+                                        <i class="bi bi-caret-{% if sort_direction == 'asc' %}up{% else %}down{% endif %}-fill"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ url_for('mod_dashboard', 
+                                    status=request.args.get('status', 'all'),
+                                    published=request.args.get('published', 'all'),
+                                    category=request.args.get('category', 'all'),
+                                    sort='author',
+                                    dir='asc' if sort_field != 'author' or sort_direction == 'desc' else 'desc'
+                                ) }}" class="text-decoration-none text-dark">
+                                    Автор
+                                    {% if sort_field == 'author' %}
+                                        <i class="bi bi-caret-{% if sort_direction == 'asc' %}up{% else %}down{% endif %}-fill"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ url_for('mod_dashboard', 
+                                    status=request.args.get('status', 'all'),
+                                    published=request.args.get('published', 'all'),
+                                    category=request.args.get('category', 'all'),
+                                    sort='category',
+                                    dir='asc' if sort_field != 'category' or sort_direction == 'desc' else 'desc'
+                                ) }}" class="text-decoration-none text-dark">
+                                    Категория
+                                    {% if sort_field == 'category' %}
+                                        <i class="bi bi-caret-{% if sort_direction == 'asc' %}up{% else %}down{% endif %}-fill"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ url_for('mod_dashboard', 
+                                    status=request.args.get('status', 'all'),
+                                    published=request.args.get('published', 'all'),
+                                    category=request.args.get('category', 'all'),
+                                    sort='status',
+                                    dir='asc' if sort_field != 'status' or sort_direction == 'desc' else 'desc'
+                                ) }}" class="text-decoration-none text-dark">
+                                    Статус
+                                    {% if sort_field == 'status' %}
+                                        <i class="bi bi-caret-{% if sort_direction == 'asc' %}up{% else %}down{% endif %}-fill"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>Публикация</th>
+                            <th>
+                                <a href="{{ url_for('mod_dashboard', 
+                                    status=request.args.get('status', 'all'),
+                                    published=request.args.get('published', 'all'),
+                                    category=request.args.get('category', 'all'),
+                                    sort='created_at',
+                                    dir='asc' if sort_field != 'created_at' or sort_direction == 'desc' else 'desc'
+                                ) }}" class="text-decoration-none text-dark">
+                                    Дата
+                                    {% if sort_field == 'created_at' %}
+                                        <i class="bi bi-caret-{% if sort_direction == 'asc' %}up{% else %}down{% endif %}-fill"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for idea in ideas %}
+                        <tr>
+                            <td>{{ idea.id }}</td>
+                            <td>
+                                <a href="{{ url_for('idea_detail', id=idea.id) }}" class="text-decoration-none" style="color: var(--primary-color);">
+                                    {{ idea.title|truncate(30) }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if idea.author_name %}
+                                    {{ idea.author_name }}
+                                    {% if idea.contact_email %}
+                                        <br><small class="text-muted">{{ idea.contact_email }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    Аноним
+                                {% endif %}
+                            </td>
+                            <td>{{ idea.category }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if idea.status == idea.STATUS_APPROVED else 'warning' if idea.status == idea.STATUS_PENDING else 'danger' if idea.status == idea.STATUS_REJECTED else 'info' if idea.status == idea.STATUS_IN_PROGRESS else 'primary' if idea.status == idea.STATUS_IMPLEMENTED else 'secondary' }}">
+                                    {{ idea.status_display() }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="form-check form-switch d-flex justify-content-center">
+                                    <input class="form-check-input publish-toggle" 
+                                           type="checkbox" 
+                                           role="switch"
+                                           data-idea-id="{{ idea.id }}"
+                                           id="publish-{{ idea.id }}"
+                                           {% if idea.is_published %}checked{% endif %}>
+                                </div>
+                            </td>
+                            <td>{{ idea.created_at.strftime('%d.%m.%Y') }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('edit_idea', id=idea.id) }}" class="btn btn-sm btn-outline-primary" title="Редактировать">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('delete_idea', id=idea.id) }}" onsubmit="return confirm('Удалить идею?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Умная пагинация с фиксированной шириной -->
+            {% if pagination.pages > 1 %}
+            <nav class="mt-4" aria-label="Навигация по страницам">
+                <ul class="pagination pagination-fixed">
+                    {# Кнопка "Назад" #}
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('mod_dashboard', 
+                            page=pagination.prev_num,
+                            status=request.args.get('status', 'all'),
+                            published=request.args.get('published', 'all'),
+                            category=request.args.get('category', 'all'),
+                            sort=sort_field,
+                            dir=sort_direction
+                        ) }}" aria-label="Предыдущая страница">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                    </li>
+                    {% endif %}
+
+                    {# Всегда показываем первую страницу #}
+                    <li class="page-item {% if pagination.page == 1 %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('mod_dashboard', 
+                            page=1,
+                            status=request.args.get('status', 'all'),
+                            published=request.args.get('published', 'all'),
+                            category=request.args.get('category', 'all'),
+                            sort=sort_field,
+                            dir=sort_direction
+                        ) }}">1</a>
+                    </li>
+
+                    {# Многоточие после первой страницы, если нужно #}
+                    {% if pagination.page > 3 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+
+                    {# Страницы вокруг текущей #}
+                    {% for p in range([2, pagination.page-1]|max, [pagination.pages-1, pagination.page+2]|min + 1) %}
+                        {% if p > 1 and p < pagination.pages %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('mod_dashboard', 
+                                page=p,
+                                status=request.args.get('status', 'all'),
+                                published=request.args.get('published', 'all'),
+                                category=request.args.get('category', 'all'),
+                                sort=sort_field,
+                                dir=sort_direction
+                            ) }}">{{ p }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {# Многоточие перед последней страницей, если нужно #}
+                    {% if pagination.page < pagination.pages - 2 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+
+                    {# Всегда показываем последнюю страницу (если она не первая) #}
+                    {% if pagination.pages > 1 %}
+                    <li class="page-item {% if pagination.page == pagination.pages %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('mod_dashboard', 
+                            page=pagination.pages,
+                            status=request.args.get('status', 'all'),
+                            published=request.args.get('published', 'all'),
+                            category=request.args.get('category', 'all'),
+                            sort=sort_field,
+                            dir=sort_direction
+                        ) }}">{{ pagination.pages }}</a>
+                    </li>
+                    {% endif %}
+
+                    {# Кнопка "Вперед" #}
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('mod_dashboard', 
+                            page=pagination.next_num,
+                            status=request.args.get('status', 'all'),
+                            published=request.args.get('published', 'all'),
+                            category=request.args.get('category', 'all'),
+                            sort=sort_field,
+                            dir=sort_direction
+                        ) }}" aria-label="Следующая страница">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                {# Информация о текущей позиции #}
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        Страница {{ pagination.page }} из {{ pagination.pages }} 
+                        (всего {{ pagination.total }} идей)
+                    </small>
+                </div>
+            </nav>
+            {% endif %}
+
+            <!-- Дополнительные действия -->
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ url_for('export_ideas') }}" class="btn btn-outline-success">
+                    <i class="bi bi-file-excel me-2"></i>Экспорт в Excel
+                </a>
+                <a href="{{ url_for('manage_categories') }}" class="btn" style="background-color: var(--primary-color); color: white;">
+                    <i class="bi bi-tags me-2"></i>Управление категориями
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript для переключателей публикации -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    
+    document.querySelectorAll('.publish-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const ideaId = this.dataset.ideaId;
+            const isPublished = this.checked;
+            
+            fetch(`/idea/${ideaId}/toggle_publish`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    is_published: isPublished
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    this.checked = !isPublished;
+                    alert('Ошибка при обновлении статуса публикации');
+                }
+            })
+            .catch(error => {
+                this.checked = !isPublished;
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+</script>
+
+{% endblock %}

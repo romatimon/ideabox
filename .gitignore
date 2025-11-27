@@ -1,5 +1,8 @@
 # Environments
 .env
+instance/
+uploads/
+
 .venv
 env/
 venv/
@@ -10,7 +13,3 @@ log.log
 .db
 
 __pycache__/
-
-uploads/
-
-instance/

@@ -9,7 +9,7 @@
                 <h2 class="h4 mb-0">
                     <i class="bi bi-lightbulb"></i> {{ idea.title }}
                 </h2>
-                <a href="{{ url_for('index') }}" class="btn btn-sm" style="background-color: white; color: var(--primary-color);">
+                <a href="{{ url_for('index') }}" class="btn btn-sm btn-light">
                     <i class="bi bi-arrow-left"></i> Назад
                 </a>
             </div>
@@ -18,20 +18,22 @@
         <div class="card-body">
             <!-- Мета-информация -->
             <div class="d-flex flex-wrap gap-2 mb-4">
+                <span class="badge bg-{{ 'warning' if idea.status == idea.STATUS_PENDING else 'success' if idea.status == idea.STATUS_APPROVED else 'info' if idea.status == idea.STATUS_IN_PROGRESS else 'primary' if idea.status == idea.STATUS_IMPLEMENTED else 'danger' }}">
+                    {{ idea.status_display() }}
+                </span>
                 <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
                     <i class="bi bi-tag"></i> {{ idea.category }}
                 </span>
-                <span class="badge bg-{{ 'success' if idea.status == 'Одобрено' else 'warning' if idea.status == 'На рассмотрении' else 'danger' }}">
-                    {{ idea.status }}
-                </span>
-                {% if idea.author_name %}
-                <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
-                    <i class="bi bi-person"></i> {{ idea.author_name }}
-                </span>
-                {% else %}
-                <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
-                    <i class="bi bi-incognito"></i> Анонимно
-                </span>
+                {% if current_moderator %}
+                    {% if idea.author_name %}
+                    <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
+                        <i class="bi bi-person"></i> {{ idea.author_name }}
+                    </span>
+                    {% else %}
+                    <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
+                        <i class="bi bi-incognito"></i> Аноним
+                    </span>
+                    {% endif %}
                 {% endif %}
                 <span class="badge bg-light text-dark">
                     <i class="bi bi-calendar"></i> {{ idea.created_at.strftime('%d.%m.%Y') }}
@@ -45,30 +47,65 @@
                     <i class="bi bi-shield-check"></i>
                     <span>Действия модератора</span>
                 </h5>
-                <div class="d-flex flex-wrap gap-2">
-                    {% if idea.status != 'Одобрено' %}
+                
+                <!-- Основные действия с идеей -->
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <!-- Кнопка редактирования -->
+                    <a href="{{ url_for('edit_idea', id=idea.id) }}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil"></i> Редактировать
+                    </a>
+                    
+                    <!-- Форма для одобрения -->
                     <form method="POST" action="{{ url_for('approve_idea', id=idea.id) }}">
-                        <button type="submit" class="btn btn-success btn-sm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-success btn-sm" aria-label="Одобрить идею">
                             <i class="bi bi-check-circle"></i> Одобрить
                         </button>
                     </form>
-                    {% endif %}
                     
-                    {% if idea.status != 'Отклонено' %}
+                    <!-- Форма для отклонения -->
                     <form method="POST" action="{{ url_for('reject_idea', id=idea.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-warning btn-sm">
                             <i class="bi bi-slash-circle"></i> Отклонить
                         </button>
                     </form>
-                    {% endif %}
                     
                     <form method="POST" action="{{ url_for('delete_idea', id=idea.id) }}" 
-                          onsubmit="return confirm('Вы уверены, что хотите удалить эту идею?');">
+                        onsubmit="return confirm('Вы уверены, что хотите удалить эту идею?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-danger btn-sm">
                             <i class="bi bi-trash"></i> Удалить
                         </button>
                     </form>
                 </div>
+
+                <!-- Связь с автором -->
+                {% if idea.contact_email %}
+                <div class="contact-author-section pt-3 border-top">
+                    <h6 class="mb-2" style="color: var(--primary-color);">
+                        <i class="bi bi-envelope"></i> Связь с автором:
+                    </h6>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <!-- Написать напрямую -->
+                        <a href="mailto:{{ idea.contact_email }}?subject=По вашей идее: {{ idea.title | urlencode }}&body=Здравствуйте!%0A%0AПо вашей идее '{{ idea.title }}' (ID: {{ idea.id }})" 
+                           class="btn btn-primary btn-sm"
+                           target="_blank">
+                            <i class="bi bi-envelope me-1"></i> Написать автору
+                        </a>
+                        
+                        <small class="text-muted">
+                            <i class="bi bi-at me-1"></i> {{ idea.contact_email }}
+                        </small>
+                        
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 copy-email" 
+                                data-email="{{ idea.contact_email }}"
+                                title="Скопировать email">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
 
@@ -76,12 +113,12 @@
             <div class="idea-content">
                 <!-- Блок проблемы -->
                 <div class="mb-4">
-                    <h5 class="d-flex align-items-center gap-2" style="color: #dc3545;">
+                    <h5 class="d-flex align-items-center gap-2 text-danger">
                         <i class="bi bi-exclamation-triangle-fill"></i>
-                        <span>Проблема</span>
+                        <span>Суть предложения</span>
                     </h5>
                     <div class="ps-3 border-start border-3 border-danger bg-light bg-opacity-10 p-3 rounded-end">
-                        <p class="mb-0">{{ idea.problem|urlize(target="_blank") }}</p>
+                        <p class="mb-0">{{ idea.essence|urlize(target="_blank") }}</p>
                     </div>
                 </div>
             
@@ -96,17 +133,6 @@
                     </div>
                 </div>
             
-                <!-- Блок ожидаемого результата -->
-                <div class="mb-4">
-                    <h5 class="d-flex align-items-center gap-2" style="color: #198754;">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span>Ожидаемый результат</span>
-                    </h5>
-                    <div class="ps-3 border-start border-3 border-success bg-light bg-opacity-10 p-3 rounded-end">
-                        <p class="mb-0">{{ idea.expected_result|urlize(target="_blank") }}</p>
-                    </div>
-                </div>
-            
                 <!-- Блок дополнительной информации -->
                 {% if idea.description %}
                 <div class="mb-4">
@@ -114,34 +140,25 @@
                         <i class="bi bi-info-circle-fill"></i>
                         <span>Дополнительная информация</span>
                     </h5>
-                    <div class="ps-3 border-start border-3" style="border-color: var(--primary-color); background-color: rgba(20, 66, 122, 0.05); p-3 rounded-end">
+                    <div class="ps-3 border-start border-3 border-primary bg-light bg-opacity-10 p-3 rounded-end">
                         <p class="mb-0">{{ idea.description|urlize(target="_blank") }}</p>
                     </div>
                 </div>
                 {% endif %}
-            
-                <!-- Блок контактного email (только для модераторов) -->
-                {% if idea.contact_email and current_moderator %}
-                <div class="mb-4">
-                    <h5 class="d-flex align-items-center gap-2" style="color: #6f42c1;">
-                        <i class="bi bi-envelope-fill"></i>
-                        <span>Контактный email</span>
-                    </h5>
-                    <div class="ps-3 border-start border-3 border-purple bg-light bg-opacity-10 p-3 rounded-end">
-                        <p class="mb-0 d-flex align-items-center">
-                            <a href="mailto:{{ idea.contact_email }}" class="text-decoration-none">
-                                <i class="bi bi-envelope me-2"></i>{{ idea.contact_email }}
-                            </a>
-                            <button class="btn btn-sm btn-outline-secondary ms-2 py-0 px-2 copy-email" 
-                                    data-email="{{ idea.contact_email }}"
-                                    title="Скопировать email">
-                                <i class="bi bi-clipboard"></i>
-                            </button>
-                        </p>
-                    </div>
-                </div>
-                {% endif %}
             </div>
+
+            <!-- Обратная связь модератора -->
+            {% if idea.moderator_feedback %}
+            <div class="mb-4">
+                <h5 class="d-flex align-items-center gap-2" style="color: #6c757d;">
+                    <i class="bi bi-chat-square-text-fill"></i>
+                    <span>Комментарий модератора</span>
+                </h5>
+                <div class="ps-3 border-start border-3 border-secondary bg-light bg-opacity-10 p-3 rounded-end">
+                    <p class="mb-0">{{ idea.moderator_feedback|urlize(target="_blank") }}</p>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Прикрепленные файлы -->
             {% if idea.attachments %}
@@ -149,7 +166,7 @@
                 <h5 class="d-flex align-items-center gap-2" style="color: var(--primary-color);">
                     <i class="bi bi-paperclip"></i>
                     <span>Прикрепленные файлы</span>
-                    <span class="badge rounded-pill" style="background-color: var(--primary-color); color: white;">{{ idea.attachments|length }}</span>
+                    <span class="badge rounded-pill bg-primary text-white">{{ idea.attachments|length }}</span>
                 </h5>
                 <div class="list-group">
                     {% for attachment in idea.attachments %}
@@ -158,17 +175,16 @@
                             <i class="bi bi-file-earmark me-2"></i>
                             <span>{{ attachment.filename }}</span>
                             <small class="text-muted ms-2">
-                                {% if attachment.file_size > 0 %}
-                                    ({{ attachment.file_size|filesizeformat }})
+                                {% if attachment.file_size != "0 B" %}
+                                    ({{ attachment.file_size }})
                                 {% else %}
                                     (размер неизвестен)
                                 {% endif %}
                             </small>
                         </div>
                         <a href="{{ url_for('download_attachment', id=attachment.id) }}" 
-                           class="btn btn-sm" 
-                           style="background-color: var(--primary-color); color: white;"
-                           target="_blank">
+                            class="btn btn-sm btn-primary"
+                            target="_blank">
                             <i class="bi bi-download"></i> Скачать
                         </a>
                     </div>
@@ -178,95 +194,7 @@
             {% endif %}
         </div>
     </div>
-
-    <!-- Блок комментариев (только для модераторов) -->
-    {% if current_moderator %}
-    <div class="card shadow-sm">
-        <div class="card-header" style="background-color: #f0f7ff; color: var(--primary-color);">
-            <h3 class="h5 mb-0 d-flex align-items-center gap-2">
-                <i class="bi bi-chat-left-text"></i>
-                <span>Комментарии модераторов</span>
-                {% if comments %}
-                <span class="badge rounded-pill" style="background-color: var(--primary-color); color: white;">{{ comments|length }}</span>
-                {% endif %}
-            </h3>
-        </div>
-        
-        <div class="card-body">
-            {% if comments %}
-                <div class="list-group mb-4">
-                    {% for comment in comments %}
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <small class="d-flex align-items-center gap-1">
-                                <i class="bi bi-person-fill" style="color: var(--primary-color);"></i>
-                                <strong>{{ comment.author_name }}</strong>
-                            </small>
-                            <small class="text-muted">
-                                {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}
-                            </small>
-                        </div>
-                        <p class="mb-0">{{ comment.text }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="alert alert-info mb-4">
-                    <i class="bi bi-info-circle"></i> Пока нет комментариев
-                </div>
-            {% endif %}
-            
-            <!-- Форма добавления комментария -->
-            <h5 class="mb-3" style="color: var(--primary-color);">Добавить комментарий</h5>
-            <form method="POST">
-                {{ form.hidden_tag() }}
-                
-                <div class="mb-3">
-                    {{ form.text(class="form-control", rows=3, placeholder="Ваш комментарий...", required=True) }}
-                </div>
-                
-                <button type="submit" class="btn" style="background-color: var(--primary-color); color: white;">
-                    <i class="bi bi-send"></i> Отправить
-                </button>
-            </form>
-        </div>
-    </div>
-    {% endif %}
 </div>
-
-<style>
-    .idea-content h5 {
-        font-size: 1.1rem;
-        margin-bottom: 0.75rem;
-    }
-    
-    .list-group-item {
-        transition: background-color 0.2s;
-        border-radius: var(--border-radius) !important;
-        margin-bottom: 0.5rem;
-    }
-    
-    .list-group-item:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .moderator-actions {
-        border-radius: var(--border-radius);
-    }
-    
-    .badge {
-        font-weight: 500;
-        padding: 0.35em 0.65em;
-    }
-    
-    .border-warning {
-        border-color: #fd7e14 !important;
-    }
-    
-    .border-purple {
-        border-color: #6f42c1 !important;
-    }
-</style>
 
 <script>
 document.querySelectorAll('.copy-email').forEach(btn => {

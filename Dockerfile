@@ -1,29 +1,22 @@
-# Используем официальный образ Python
 FROM python:3.9-slim
 
-# Устанавливаем зависимости для работы с SQLite и другими библиотеками
-RUN apt-get update && apt-get install -y \
-    gcc \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Создаем рабочую директорию
 WORKDIR /app
 
-# Копируем зависимости
-COPY requirements.txt .
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем зависимости Python
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем весь проект
 COPY . .
 
-# Создаем папку для загрузок
-RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+RUN mkdir -p /app/uploads /app/data
+RUN chmod 755 /app/uploads /app/data
 
-# Указываем порт
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+
 EXPOSE 5000
 
-# Команда для запуска приложения
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["sh", "-c", "python init_database.py && flask run --host=0.0.0.0 --port=5000"]

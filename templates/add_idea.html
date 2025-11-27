@@ -12,84 +12,117 @@
             </h4>
         </div>
         <div class="card-body">
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data" id="ideaForm">
                 {{ form.hidden_tag() }}
                 
                 <!-- Основная информация -->
                 <div class="mb-4">
-                    <h5 class="border-bottom pb-2 d-flex align-items-center gap-2" style="color: var(--primary-color);">
-                        <i class="bi bi-info-circle"></i>
-                        <span>Основная информация</span>
+                    <h5 class="border-bottom pb-2 mb-3" style="color: var(--primary-color);">
+                        <i class="bi bi-info-circle me-2"></i>Основная информация
                     </h5>
                     
-                    <div class="mb-3">
-                        {{ form.title.label(class="form-label fw-medium") }}
-                        {{ form.title(class="form-control form-control-lg", placeholder="Краткое название идеи (обязательно)", required=True) }}
-                        {% for error in form.title.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                        {% endfor %}
+                    <!-- Заголовок и категория -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                {{ form.title.label(class="form-label fw-medium") }}
+                                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), 
+                                placeholder="Краткое название идеи", 
+                                required=True) }}
+                                {% for error in form.title.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.category.label(class="form-label fw-medium") }}
+                                {{ form.category(class="form-select" + (" is-invalid" if form.category.errors else ""), 
+                                id="categorySelect") }}
+                                
+                                <!-- Блок для отображения описания категории -->
+                                <div id="categoryDescription" class="mt-2 p-2 bg-light rounded small" style="display: none;">
+                                    <i class="bi bi-info-circle me-1 text-primary"></i>
+                                    <span id="descriptionText"></span>
+                                </div>
+                                
+                                {% for error in form.category.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.category.label(class="form-label fw-medium") }}
-                            {{ form.category(class="form-select") }}
+                    <!-- Контактные данные -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.author_name.label(class="form-label fw-medium") }}
+                                {{ form.author_name(class="form-control" + (" is-invalid" if form.author_name.errors else ""), 
+                                placeholder="Ваше имя (необязательно)") }}
+                                {% for error in form.author_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.author_name.label(class="form-label fw-medium") }}
-                            {{ form.author_name(class="form-control", placeholder="Оставьте пустым для анонимности") }}
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.contact_email.label(class="form-label fw-medium") }}
+                                {{ form.contact_email(class="form-control" + (" is-invalid" if form.contact_email.errors else ""), 
+                                placeholder="email@example.com (необязательно)") }}
+                                {% for error in form.contact_email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        {{ form.contact_email.label(class="form-label fw-medium") }}
-                        {{ form.contact_email(class="form-control") }}
-                        <div class="form-text">Оставьте пустым, если не хотите указывать</div>
-                        {% for error in form.contact_email.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                        {% endfor %}
+                    
+                    <!-- Информационный блок -->
+                    <div class="alert alert-info mb-3 p-2" style="border-left: 3px solid #0d6efd;">
+                        <div class="d-flex">
+                            <i class="bi bi-info-circle-fill me-2" style="color: #0d6efd;"></i>
+                            <div>
+                                <h6 class="mb-1" style="color: #0d6efd;">Почему лучше указать контакты?</h6>
+                                <p class="mb-0 small">
+                                    Идеи с указанным именем и email получают приоритет при рассмотрении.<br>
+                                    <strong>Ваши данные видны только модераторам</strong> и используются исключительно для обратной связи.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Детали идеи -->
                 <div class="mb-4">
-                    <h5 class="border-bottom pb-2 d-flex align-items-center gap-2" style="color: var(--primary-color);">
-                        <i class="bi bi-card-text"></i>
-                        <span>Детали идеи</span>
-                    </h5>
-                    
                     <div class="mb-3">
-                        {{ form.problem.label(class="form-label fw-medium") }}
-                        {{ form.problem(class="form-control", rows=3, placeholder="Опишите проблему, которую вы хотите решить (обязательно)", required=True) }}
-                        <div class="form-text">Четко сформулируйте существующую проблему</div>
-                        {% for error in form.problem.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        {{ form.essence.label(class="form-label fw-medium") }}
+                        {{ form.essence(class="form-control" + (" is-invalid" if form.essence.errors else ""), 
+                           rows=3, 
+                           placeholder="Опишите суть вашего предложения и четко сформулируйте свою идею (обязательно)", 
+                           required=True) }}
+                        {% for error in form.essence.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
                     
                     <div class="mb-3">
                         {{ form.solution.label(class="form-label fw-medium") }}
-                        {{ form.solution(class="form-control", rows=3, placeholder="Опишите ваше решение проблемы (обязательно)", required=True) }}
-                        <div class="form-text">Подробно изложите ваш способ решения проблемы</div>
+                        {{ form.solution(class="form-control" + (" is-invalid" if form.solution.errors else ""), 
+                           rows=3, 
+                           placeholder="Опишите ваше предлагаемое решение и подробно изложите способ реализации (обязательно)", 
+                           required=True) }}
                         {% for error in form.solution.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.expected_result.label(class="form-label fw-medium") }}
-                        {{ form.expected_result(class="form-control", rows=2, placeholder="Опишите, каких результатов вы ожидаете (обязательно)", required=True) }}
-                        <div class="form-text">Какие улучшения произойдут после реализации?</div>
-                        {% for error in form.expected_result.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
                     
                     <div class="mb-3">
                         {{ form.description.label(class="form-label fw-medium") }}
-                        {{ form.description(class="form-control", rows=3, placeholder="Любая дополнительная информация (необязательно)") }}
-                        <div class="form-text">Можете добавить любые уточнения или комментарии</div>
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), 
+                           rows=3, 
+                           placeholder="Любая дополнительная информация (необязательно)") }}
                         {% for error in form.description.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
                 </div>
@@ -103,13 +136,15 @@
                     
                     <div class="mb-3">
                         {{ form.attachments.label(class="form-label fw-medium") }}
-                        {{ form.attachments(class="form-control", multiple="multiple") }}
+                        {{ form.attachments(class="form-control" + (" is-invalid" if form.attachments.errors else ""), 
+                           multiple="multiple",
+                           id="fileInput") }}
                         <div class="form-text">
                             Можно прикрепить несколько файлов (jpg, png, pdf, doc, docx, xls, xlsx).<br>
                             Максимальный размер файла: 10MB.
                         </div>
                         {% for error in form.attachments.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
                     
@@ -121,7 +156,7 @@
                 
                 <!-- Кнопка отправки -->
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-lg" style="background-color: var(--primary-color); color: white;">
+                    <button type="submit" class="btn btn-lg" style="background-color: var(--primary-color); color: white;" id="submitBtn">
                         <i class="bi bi-send-fill me-2"></i>Отправить на модерацию
                     </button>
                     <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
@@ -133,13 +168,40 @@
     </div>
 </div>
 
-<!-- JavaScript для предпросмотра выбранных файлов -->
+<!-- JavaScript для предпросмотра выбранных файлов, описания категорий и обработки формы -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.querySelector('input[type="file"]');
-    const filePreview = document.getElementById('filePreview');
-    const fileList = document.getElementById('fileList');
+    const categorySelect = document.getElementById('categorySelect');
+    const descriptionContainer = document.getElementById('categoryDescription');
+    const descriptionText = document.getElementById('descriptionText');
     
+    // Создаем объект с описаниями категорий прямо в JavaScript
+    const categoryDescriptions = {
+        {% for category in form.category.choices %}
+            "{{ category[0] }}": "{{ form.category.descriptions.get(category[0], '') }}",
+        {% endfor %}
+    };
+    
+    // Функция для обновления описания категории
+    function updateCategoryDescription() {
+        const selectedValue = categorySelect.value;
+        const description = categoryDescriptions[selectedValue];
+        
+        if (description && description.trim() !== '') {
+            descriptionText.textContent = description;
+            descriptionContainer.style.display = 'block';
+        } else {
+            descriptionContainer.style.display = 'none';
+        }
+    }
+    
+    // Обработчик изменения категории
+    categorySelect.addEventListener('change', updateCategoryDescription);
+    
+    // Инициализация описания при загрузке
+    updateCategoryDescription();
+    
+    // Обработка выбора файлов
     fileInput.addEventListener('change', function() {
         fileList.innerHTML = '';
         
@@ -156,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'btn btn-sm btn-outline-danger';
                 removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                removeBtn.setAttribute('aria-label', 'Удалить файл');
                 removeBtn.onclick = (function(file) {
                     return function(e) {
                         e.preventDefault();
@@ -179,6 +242,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Обработка отправки формы
+    ideaForm.addEventListener('submit', function() {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Отправка...';
+    });
+    
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -188,45 +257,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-<style>
-    .form-control, .form-select, .form-control-lg {
-        border-radius: var(--border-radius);
-        padding: 0.5rem 1rem;
-        border: 1px solid #ced4da;
-    }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(20, 66, 122, 0.25);
-    }
-    
-    .invalid-feedback {
-        color: #dc3545;
-        font-size: 0.875em;
-        margin-top: 0.25rem;
-    }
-    
-    .form-text {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-    
-    .btn {
-        border-radius: var(--border-radius);
-        transition: var(--transition);
-    }
-    
-    .btn-lg {
-        padding: 0.75rem 1.5rem;
-    }
-    
-    .list-group-item {
-        border-radius: var(--border-radius) !important;
-    }
-    
-    .border-bottom {
-        border-color: rgba(20, 66, 122, 0.1) !important;
-    }
-</style>
 {% endblock %}

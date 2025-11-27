@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Статистика идей | Лаборатория идей{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0" style="color: var(--primary-color);">Статистика идей</h1>
+        <a href="{{ url_for('index') }}" class="btn" style="background-color: var(--primary-color); color: white;">
+            <i class="bi bi-arrow-left me-2"></i>Назад
+        </a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Общая статистика -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header text-white" style="background-color: var(--primary-color);">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Общая статистика</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="p-3 rounded" style="background-color: #f8f9fa;">
+                                <h3 class="mb-1">{{ total_ideas }}</h3>
+                                <small class="text-muted">Всего идей</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 rounded" style="background-color: #f8f9fa;">
+                                <h3 class="mb-1">{{ approved_ideas }}</h3>
+                                <small class="text-muted">Одобрено</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 rounded" style="background-color: #f8f9fa;">
+                                <h3 class="mb-1">{{ pending_ideas }}</h3>
+                                <small class="text-muted">На рассмотрении</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 rounded" style="background-color: #f8f9fa;">
+                                <h3 class="mb-1">{{ rejected_ideas }}</h3>
+                                <small class="text-muted">Отклонено</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background-color: #f8f9fa;">
+                                <h3 class="mb-1">{{ in_progress_ideas }}</h3>
+                                <small class="text-muted">В работе</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background-color: #f8f9fa;">
+                                <h3 class="mb-1">{{ implemented_ideas }}</h3>
+                                <small class="text-muted">Реализовано</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика по категориям -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header text-white" style="background-color: var(--primary-color);">
+                    <h5 class="mb-0"><i class="bi bi-tag me-2"></i>По категориям</h5>
+                </div>
+                <div class="card-body">
+                    {% if categories %}
+                        <div class="list-group">
+                            {% for category in categories %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ category }}</span>
+                                <span class="badge" style="background-color: var(--primary-color); color: white;">
+                                    {{ category_counts[loop.index0] }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">Нет категорий</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Дополнительная статистика -->
+    <div class="row g-4">
+        <!-- Статистика по статусам -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header text-white" style="background-color: var(--primary-color);">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Распределение по статусам</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="p-3 rounded border">
+                                <h4 class="text-primary mb-1">{{ approved_ideas }}</h4>
+                                <small class="text-muted">Одобрено</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">{% if total_ideas > 0 %}{{ (approved_ideas / total_ideas * 100)|round(1) }}%{% else %}0%{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="p-3 rounded border">
+                                <h4 class="text-warning mb-1">{{ pending_ideas }}</h4>
+                                <small class="text-muted">На рассмотрении</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-warning">{% if total_ideas > 0 %}{{ (pending_ideas / total_ideas * 100)|round(1) }}%{% else %}0%{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="p-3 rounded border">
+                                <h4 class="text-danger mb-1">{{ rejected_ideas }}</h4>
+                                <small class="text-muted">Отклонено</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-danger">{% if total_ideas > 0 %}{{ (rejected_ideas / total_ideas * 100)|round(1) }}%{% else %}0%{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="p-3 rounded border">
+                                <h4 class="text-info mb-1">{{ in_progress_ideas }}</h4>
+                                <small class="text-muted">В работе</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-info">{% if total_ideas > 0 %}{{ (in_progress_ideas / total_ideas * 100)|round(1) }}%{% else %}0%{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="p-3 rounded border">
+                                <h4 class="text-success mb-1">{{ implemented_ideas }}</h4>
+                                <small class="text-muted">Реализовано</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">{% if total_ideas > 0 %}{{ (implemented_ideas / total_ideas * 100)|round(1) }}%{% else %}0%{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="p-3 rounded border">
+                                <h4 class="text-secondary mb-1">{{ total_ideas }}</h4>
+                                <small class="text-muted">Всего</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-secondary">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,67 +4,78 @@
 
 {% block content %}
 <div class="container py-4">
-    {# Заголовок и кнопка добавления #}
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-        <div>
-            <h1 class="mb-1" style="color: var(--primary-color); color: rgb(209, 204, 204);">Список идей</h1>
-        </div>
-        <a href="{{ url_for('add_idea') }}" class="btn px-4" style="background-color: var(--primary-color); color: white;">
-            <i class="bi bi-plus-lg me-2"></i>Добавить идею
-        </a>
-    </div>
-
     {# Панель фильтров #}
-    <div class="card shadow-sm mb-4">
-        <div class="card-body p-4">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label for="statusFilter" class="form-label fw-medium">Статус</label>
+    <div class="card shadow-sm mb-4 filter-panel">
+        <div class="card-body p-3">
+            <form method="get" class="row g-2 align-items-end">
+                <!-- Поиск -->
+                <div class="col-xl-2 col-lg-3 col-md-4 col-12">
+                    <label for="searchInput" class="form-label">Поиск</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" name="search" 
+                            placeholder="Поиск по идеям..." value="{{ search_query }}"
+                            aria-label="Поиск по идеям">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Фильтр по статусу -->
+                <div class="col-xl-2 col-lg-2 col-md-3 col-6">
+                    <label for="statusFilter" class="form-label">Статус</label>
                     <select id="statusFilter" name="status" class="form-select">
                         <option value="all" {% if current_status=='all' %}selected{% endif %}>Все статусы</option>
-                        <option value="На рассмотрении" {% if current_status=='На рассмотрении' %}selected{% endif %}>На рассмотрении</option>
-                        <option value="Одобрено" {% if current_status=='Одобрено' %}selected{% endif %}>Одобрено</option>
-                        <option value="Отклонено" {% if current_status=='Отклонено' %}selected{% endif %}>Отклонено</option>
+                        <option value="approved" {% if current_status=='approved' %}selected{% endif %}>Одобрено</option>
+                        <option value="in_progress" {% if current_status=='in_progress' %}selected{% endif %}>В работе</option>
+                        <option value="implemented" {% if current_status=='implemented' %}selected{% endif %}>Реализовано</option>
                     </select>
                 </div>
                 
-                <div class="col-md-3">
-                    <label for="categoryFilter" class="form-label fw-medium">Категория</label>
+                <!-- Фильтр по категории -->
+                <div class="col-xl-2 col-lg-2 col-md-3 col-6">
+                    <label for="categoryFilter" class="form-label">Категория</label>
                     <select id="categoryFilter" name="category" class="form-select">
                         <option value="all" {% if current_category=='all' %}selected{% endif %}>Все категории</option>
-                        <option value="Общее" {% if current_category=='Общее' %}selected{% endif %}>Общее</option>
-                        <option value="Процессы" {% if current_category=='Процессы' %}selected{% endif %}>Процессы</option>
-                        <option value="Клиенты" {% if current_category=='Клиенты' %}selected{% endif %}>Клиенты</option>
-                        <option value="Обучение" {% if current_category=='Обучение' %}selected{% endif %}>Обучение</option>
-                        <option value="Маркетинг" {% if current_category=='Маркетинг' %}selected{% endif %}>Маркетинг</option>
-                        <option value="Культура" {% if current_category=='Культура' %}selected{% endif %}>Культура</option>
+                        {% for category in categories %}
+                        <option value="{{ category.name }}" {% if current_category==category.name %}selected{% endif %}
+                                title="{{ category.name }}">
+                            {{ category.name|truncate(15) }}
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
                 
-                <div class="col-md-2">
-                    <label for="sortFilter" class="form-label fw-medium">Сортировка</label>
+                <!-- Сортировка -->
+                <div class="col-xl-2 col-lg-2 col-md-3 col-6">
+                    <label for="sortFilter" class="form-label">Сортировка</label>
                     <select id="sortFilter" name="sort" class="form-select">
                         <option value="newest" {% if current_sort=='newest' %}selected{% endif %}>Сначала новые</option>
                         <option value="oldest" {% if current_sort=='oldest' %}selected{% endif %}>Сначала старые</option>
                     </select>
                 </div>
                 
-                <div class="col-md-2 d-grid">
-                    <button type="submit" class="btn" style="background-color: var(--primary-color); color: white;">
-                        <i class="bi bi-funnel me-1"></i>Применить
-                    </button>
-                </div>
+                <!-- Группа кнопок действий -->
+                <div class="col-xl-4 col-lg-3 col-md-12 col-12">
+                    <div class="action-buttons">
+                        <!-- Кнопка применения фильтров -->
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-funnel me-1"></i> Применить
+                        </button>
 
-                {# Кнопка выгрузки в Excel (только для модераторов) #}
-                {% if 'moderator_id' in session %}
-                <div class="col-md-2 d-grid">
-                    <a href="{{ url_for('export_ideas') }}?status={{ current_status }}&category={{ current_category }}" 
-                       class="btn btn-success"
-                       title="Выгрузить в Excel">
-                        <i class="bi bi-file-excel me-1"></i> Excel
-                    </a>
+                        <!-- Кнопка добавления идеи -->
+                        <a href="{{ url_for('add_idea') }}" class="btn btn-success flex-grow-1">
+                            <i class="bi bi-plus-lg me-1"></i> Добавить идею
+                        </a>
+
+                        {# Кнопка модерации (только для модераторов) #}
+                        {% if 'moderator_id' in session %}
+                        <a href="{{ url_for('mod_dashboard') }}" class="btn btn-outline-primary flex-grow-1">
+                            <i class="bi bi-speedometer2 me-1"></i> Модерация
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
             </form>
         </div>
     </div>
@@ -74,35 +85,37 @@
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for idea in ideas %}
         <div class="col">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow-sm idea-card">
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="badge rounded-pill bg-{{ 'success' if idea.status == 'Одобрено' else 'warning' if idea.status == 'На рассмотрении' else 'danger' }}">
-                            {{ idea.status }}
-                        </span>
+                    <span class="badge bg-{{ 'success' if idea.status == idea.STATUS_APPROVED else 'warning' if idea.status == idea.STATUS_PENDING else 'danger' if idea.status == idea.STATUS_REJECTED else 'info' if idea.status == idea.STATUS_IN_PROGRESS else 'primary' if idea.status == idea.STATUS_IMPLEMENTED else 'secondary' }}">
+                        {{ idea.status_display() }}
+                    </span>
                         <small class="text-muted">{{ idea.created_at.strftime('%d.%m.%Y') }}</small>
                     </div>
                     
-                    <h3 class="h5 card-title mb-3" style="color: var(--primary-color);">{{ idea.title }}</h3>
+                    <h3 class="h5 card-title mb-3 text-primary">{{ idea.title }}</h3>
                     
-                    <p class="card-text flex-grow-1 mb-3" style="color: #555;">
-                        {{ idea.problem|truncate(120) }}
+                    <p class="card-text flex-grow-1 mb-3 text-muted">
+                        {{ idea.essence|truncate(120) }}
                     </p>
                     
                     <div class="mb-3">
-                        <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">{{ idea.category }}</span>
-                        {% if idea.author_name %}
-                        <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
-                            <i class="bi bi-person me-1"></i>{{ idea.author_name }}
-                        </span>
-                        {% else %}
-                        <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
-                            <i class="bi bi-incognito me-1"></i>Аноним
-                        </span>
+                        <span class="badge bg-light text-primary">{{ idea.category }}</span>
+                        {% if current_moderator %}
+                            {% if idea.author_name %}
+                            <span class="badge bg-light text-primary">
+                                <i class="bi bi-person me-1"></i>{{ idea.author_name }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-light text-primary">
+                                <i class="bi bi-incognito me-1"></i>Аноним
+                            </span>
+                            {% endif %}
                         {% endif %}
                     </div>
                     
-                    <a href="{{ url_for('idea_detail', id=idea.id) }}" class="btn align-self-start" style="background-color: var(--primary-color); color: white;">
+                    <a href="{{ url_for('idea_detail', id=idea.id) }}" class="btn btn-primary align-self-start">
                         Подробнее <i class="bi bi-arrow-right ms-1"></i>
                     </a>
                 </div>
@@ -110,86 +123,129 @@
         </div>
         {% endfor %}
     </div>
+    
     {% else %}
     <div class="card shadow-sm">
         <div class="card-body text-center py-5">
-            <i class="bi bi-lightbulb" style="font-size: 3rem; color: var(--primary-color);"></i>
-            <h3 class="h5 mt-3 mb-2" style="color: var(--primary-color);">Идей не найдено</h3>
-            <p class="mb-4" style="color: #666;">Попробуйте изменить параметры фильтрации или добавьте первую идею</p>
-            <a href="{{ url_for('add_idea') }}" class="btn px-4" style="background-color: var(--primary-color); color: white;">
+            <i class="bi bi-lightbulb text-primary" style="font-size: 3rem;"></i>
+            <h3 class="h5 mt-3 mb-2 text-primary">Идей не найдено</h3>
+            <p class="mb-4 text-muted">Попробуйте изменить параметры фильтрации или добавьте первую идею</p>
+            <a href="{{ url_for('add_idea') }}" class="btn btn-primary px-4">
                 <i class="bi bi-plus-lg me-2"></i>Добавить идею
             </a>
+            {% if 'moderator_id' in session %}
+            <a href="{{ url_for('mod_dashboard') }}" class="btn btn-success px-4 ms-2">
+                <i class="bi bi-speedometer2 me-1"></i> Кабинет модератора
+            </a>
+            {% endif %}
         </div>
     </div>
     {% endif %}
 
-    {# Пагинация #}
-    {% if pagination and pagination.pages > 1 %}
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
+    {# Умная пагинация с фиксированной шириной #}
+    {% if pagination.pages > 1 %}
+    <nav class="mt-4" aria-label="Навигация по страницам">
+        <ul class="pagination pagination-fixed">
+            {# Кнопка "Назад" #}
             {% if pagination.has_prev %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('index', page=pagination.prev_num, status=current_status, category=current_category, sort=current_sort) }}" style="color: var(--primary-color);">
+                <a class="page-link" href="{{ url_for('index', 
+                    page=pagination.prev_num, 
+                    status=current_status, 
+                    category=current_category, 
+                    sort=current_sort, 
+                    search=search_query
+                ) }}" aria-label="Предыдущая страница">
                     <i class="bi bi-chevron-left"></i>
                 </a>
             </li>
-            {% endif %}
-            
-            {% for page in pagination.iter_pages() %}
-            <li class="page-item {% if page == pagination.page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('index', page=page, status=current_status, category=current_category, sort=current_sort) }}" 
-                   style="{% if page == pagination.page %}background-color: var(--primary-color); border-color: var(--primary-color);{% else %}color: var(--primary-color);{% endif %}">
-                    {{ page }}
-                </a>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-left"></i></span>
             </li>
+            {% endif %}
+
+            {# Всегда показываем первую страницу #}
+            <li class="page-item {% if pagination.page == 1 %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('index', 
+                    page=1, 
+                    status=current_status, 
+                    category=current_category, 
+                    sort=current_sort, 
+                    search=search_query
+                ) }}">1</a>
+            </li>
+
+            {# Многоточие после первой страницы, если нужно #}
+            {% if pagination.page > 3 %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% endif %}
+
+            {# Страницы вокруг текущей #}
+            {% for p in range([2, pagination.page-1]|max, [pagination.pages-1, pagination.page+2]|min + 1) %}
+                {% if p > 1 and p < pagination.pages %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('index', 
+                        page=p, 
+                        status=current_status, 
+                        category=current_category, 
+                        sort=current_sort, 
+                        search=search_query
+                    ) }}">{{ p }}</a>
+                </li>
+                {% endif %}
             {% endfor %}
-            
+
+            {# Многоточие перед последней страницей, если нужно #}
+            {% if pagination.page < pagination.pages - 2 %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {% endif %}
+
+            {# Всегда показываем последнюю страницу (если она не первая) #}
+            {% if pagination.pages > 1 %}
+            <li class="page-item {% if pagination.page == pagination.pages %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('index', 
+                    page=pagination.pages, 
+                    status=current_status, 
+                    category=current_category, 
+                    sort=current_sort, 
+                    search=search_query
+                ) }}">{{ pagination.pages }}</a>
+            </li>
+            {% endif %}
+
+            {# Кнопка "Вперед" #}
             {% if pagination.has_next %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('index', page=pagination.next_num, status=current_status, category=current_category, sort=current_sort) }}" style="color: var(--primary-color);">
+                <a class="page-link" href="{{ url_for('index', 
+                    page=pagination.next_num, 
+                    status=current_status, 
+                    category=current_category, 
+                    sort=current_sort, 
+                    search=search_query
+                ) }}" aria-label="Следующая страница">
                     <i class="bi bi-chevron-right"></i>
                 </a>
             </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+            </li>
             {% endif %}
         </ul>
+        
+        {# Информация о текущей позиции #}
+        <div class="text-center mt-2">
+            <small class="text-muted">
+                Страница {{ pagination.page }} из {{ pagination.pages }} 
+                (всего {{ pagination.total }} идей)
+            </small>
+        </div>
     </nav>
     {% endif %}
 </div>
-
-<style>
-    .card {
-        transition: transform 0.2s, box-shadow 0.2s;
-        border-radius: var(--border-radius);
-        border: none;
-    }
-    
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(20, 66, 122, 0.15);
-    }
-    
-    .badge {
-        font-weight: 500;
-        padding: 0.35em 0.65em;
-    }
-    
-    .form-select:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(20, 66, 122, 0.25);
-    }
-    
-    .page-item.active .page-link {
-        color: white;
-    }
-    
-    .btn-success {
-        background-color: #198754;
-        border-color: #198754;
-    }
-    
-    .btn-success:hover {
-        background-color: #157347;
-        border-color: #157347;
-    }
-</style>
 {% endblock %}

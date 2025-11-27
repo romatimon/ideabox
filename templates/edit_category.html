@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование категории | Лаборатория идей{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header text-white" style="background-color: var(--primary-color);">
+                    <h2 class="h4 mb-0 d-flex align-items-center">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        <span>Редактирование категории</span>
+                        <a href="{{ url_for('manage_categories') }}" class="btn btn-sm ms-auto" 
+                           style="background-color: white; color: var(--primary-color);">
+                            <i class="bi bi-arrow-left me-1"></i> Назад
+                        </a>
+                    </h2>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control" + (' is-invalid' if form.name.errors else '')) }}
+                            {% if form.name.errors %}
+                                {% for error in form.name.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <small class="form-text text-muted">От 2 до 100 символов</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control" + (' is-invalid' if form.description.errors else ''), rows=3) }}
+                            {% if form.description.errors %}
+                                {% for error in form.description.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <small class="form-text text-muted">До 500 символов</small>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-2"></i>Сохранить изменения
+                            </button>
+                            <a href="{{ url_for('manage_categories') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Отмена
+                            </a>
+                        </div>
+                    </form>
+                    
+                    <!-- Информация о категории -->
+                    <div class="mt-4 pt-3 border-top">
+                        <h5 class="mb-3">Информация о категории</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>ID категории:</strong> {{ category.id }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Дата создания:</strong> {{ category.created_at.strftime('%d.%m.%Y') }}
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <strong>Количество идей в категории:</strong> 
+                            <span class="badge bg-warning">{{ category.ideas_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
