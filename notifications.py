@@ -7,6 +7,22 @@ import logging
 # Настройка логирования
 logger = logging.getLogger(__name__)
 
+def nl2br_email(text, max_length=None):
+    """Преобразует переносы строк в HTML теги <br> для email."""
+    if not text:
+        return ''
+    
+    text = str(text)
+    
+    # Заменяем переносы строк
+    text = text.replace('\r\n', '<br>').replace('\n', '<br>').replace('\r', '<br>')
+    
+    # Обрезаем если нужно
+    if max_length and len(text) > max_length:
+        text = text[:max_length] + '...'
+    
+    return text
+
 def send_new_idea_notification(idea):
     """
     Отправляет уведомление о новой идеи модератору.
@@ -17,6 +33,9 @@ def send_new_idea_notification(idea):
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(FROM_EMAIL, EMAIL_PASSWORD)
+        
+        # Подготавливаем текст с переносами строк
+        essence_preview = nl2br_email(idea.essence[:250], max_length=250)
         
         html_message = f"""
         <!DOCTYPE html>
@@ -30,6 +49,7 @@ def send_new_idea_notification(idea):
                 .content {{ padding: 20px; }}
                 .idea-card {{ background: #f8f9fa; padding: 15px; margin: 15px 0; border-left: 4px solid #14427a; }}
                 .footer {{ text-align: center; padding: 15px; background: #f8f9fa; font-size: 12px; color: #666; }}
+                .text-content {{ white-space: pre-line; }}
             </style>
         </head>
         <body>
@@ -52,9 +72,9 @@ def send_new_idea_notification(idea):
                         
                         <div style="margin: 15px 0;">
                             <strong>💡 Суть предложения:</strong>
-                            <p style="background: white; padding: 10px; border-radius: 4px; margin: 8px 0;">
-                                {idea.essence[:250]}{'...' if len(idea.essence) > 250 else ''}
-                            </p>
+                            <div class="text-content" style="background: white; padding: 10px; border-radius: 4px; margin: 8px 0;">
+                                {essence_preview}
+                            </div>
                         </div>
                     </div>
                     
@@ -107,6 +127,9 @@ def send_author_confirmation(idea):
         server.starttls()
         server.login(FROM_EMAIL, EMAIL_PASSWORD)
         
+        # Подготавливаем текст с переносами строк
+        essence_preview = nl2br_email(idea.essence[:300], max_length=300)
+        
         html_message = f"""
         <!DOCTYPE html>
         <html>
@@ -120,6 +143,7 @@ def send_author_confirmation(idea):
                 .idea-card {{ background: #f8f9fa; padding: 20px; margin: 20px 0; border-left: 4px solid #28a745; border-radius: 4px; }}
                 .footer {{ text-align: center; padding: 20px; background: #f8f9fa; font-size: 12px; color: #666; }}
                 .status-info {{ background: #d1ecf1; padding: 15px; border-radius: 4px; border-left: 4px solid #0dcaf0; margin: 20px 0; }}
+                .text-content {{ white-space: pre-line; }}
             </style>
         </head>
         <body>
@@ -143,9 +167,9 @@ def send_author_confirmation(idea):
                         
                         <div style="margin: 15px 0;">
                             <strong>💡 Ваше предложение:</strong>
-                            <p style="background: white; padding: 12px; border-radius: 4px; margin: 10px 0;">
-                                {idea.essence[:300]}{'...' if len(idea.essence) > 300 else ''}
-                            </p>
+                            <div class="text-content" style="background: white; padding: 12px; border-radius: 4px; margin: 10px 0;">
+                                {essence_preview}
+                            </div>
                         </div>
                     </div>
                     
@@ -211,12 +235,26 @@ def send_status_update_notification(idea, old_status, new_status):
         # Определяем цвет и иконку в зависимости от статуса
         status_config = {
             'approved': {'color': '#28a745', 'icon': '✅', 'title': 'Одобрено'},
+            'partially_approved': {'color': '#20c997', 'icon': '✅', 'title': 'Одобрено (частично)'},
             'rejected': {'color': '#dc3545', 'icon': '❌', 'title': 'Отклонено'}, 
             'in_progress': {'color': '#0dcaf0', 'icon': '🔄', 'title': 'В работе'},
             'implemented': {'color': '#6f42c1', 'icon': '🎉', 'title': 'Реализовано'}
         }
         
         config = status_config.get(new_status, {'color': '#6c757d', 'icon': '📋', 'title': 'Обновлено'})
+        
+        # Подготавливаем комментарий модератора с переносами строк
+        moderator_feedback_html = ''
+        if idea.moderator_feedback:
+            feedback_text = nl2br_email(idea.moderator_feedback)
+            moderator_feedback_html = f"""
+            <div style="margin: 15px 0;">
+                <strong>💬 Комментарий модератора:</strong>
+                <div class="text-content" style="background: white; padding: 10px; border-radius: 4px; margin: 8px 0;">
+                    {feedback_text}
+                </div>
+            </div>
+            """
         
         html_message = f"""
         <!DOCTYPE html>
@@ -231,6 +269,7 @@ def send_status_update_notification(idea, old_status, new_status):
                 .idea-card {{ background: #f8f9fa; padding: 20px; margin: 20px 0; border-left: 4px solid {config['color']}; }}
                 .footer {{ text-align: center; padding: 20px; background: #f8f9fa; font-size: 12px; color: #666; }}
                 .status-change {{ background: #e7f3ff; padding: 15px; border-radius: 4px; margin: 20px 0; }}
+                .text-content {{ white-space: pre-line; }}
             </style>
         </head>
         <body>
@@ -254,7 +293,7 @@ def send_status_update_notification(idea, old_status, new_status):
                         <p><strong>Категория:</strong> {idea.category}</p>
                         <p><strong>Дата подачи:</strong> {idea.created_at.strftime('%d.%m.%Y')}</p>
                         
-                        {f'<div style="margin: 15px 0;"><strong>💬 Комментарий модератора:</strong><p style="background: white; padding: 10px; border-radius: 4px; margin: 8px 0;">{idea.moderator_feedback}</p></div>' if idea.moderator_feedback else ''}
+                        {moderator_feedback_html}
                     </div>
                     
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 4px;">

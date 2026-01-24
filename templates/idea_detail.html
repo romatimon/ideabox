@@ -18,7 +18,14 @@
         <div class="card-body">
             <!-- Мета-информация -->
             <div class="d-flex flex-wrap gap-2 mb-4">
-                <span class="badge bg-{{ 'warning' if idea.status == idea.STATUS_PENDING else 'success' if idea.status == idea.STATUS_APPROVED else 'info' if idea.status == idea.STATUS_IN_PROGRESS else 'primary' if idea.status == idea.STATUS_IMPLEMENTED else 'danger' }}">
+                <span class="badge bg-{{ 
+                    'warning' if idea.status == idea.STATUS_PENDING 
+                    else 'success' if idea.status == idea.STATUS_APPROVED 
+                    else 'info' if idea.status == idea.STATUS_PARTIALLY_APPROVED
+                    else 'primary' if idea.status == idea.STATUS_IN_PROGRESS 
+                    else 'success' if idea.status == idea.STATUS_IMPLEMENTED 
+                    else 'danger' 
+                }}">
                     {{ idea.status_display() }}
                 </span>
                 <span class="badge" style="background-color: #e9f0f7; color: var(--primary-color);">
@@ -63,6 +70,14 @@
                         </button>
                     </form>
                     
+                    <!-- Форма для частичного одобрения -->
+                    <form method="POST" action="{{ url_for('partially_approve_idea', id=idea.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-info btn-sm" aria-label="Одобрить частично">
+                            <i class="bi bi-check-circle-half"></i> Частично одобрить
+                        </button>
+                    </form>
+
                     <!-- Форма для отклонения -->
                     <form method="POST" action="{{ url_for('reject_idea', id=idea.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -118,7 +133,7 @@
                         <span>Суть предложения</span>
                     </h5>
                     <div class="ps-3 border-start border-3 border-danger bg-light bg-opacity-10 p-3 rounded-end">
-                        <p class="mb-0">{{ idea.essence|urlize(target="_blank") }}</p>
+                        <p class="mb-0">{{ idea.essence|nl2br|safe }}</p>
                     </div>
                 </div>
             
@@ -129,7 +144,7 @@
                         <span>Предлагаемое решение</span>
                     </h5>
                     <div class="ps-3 border-start border-3 border-warning bg-light bg-opacity-10 p-3 rounded-end">
-                        <p class="mb-0">{{ idea.solution|urlize(target="_blank") }}</p>
+                        <p class="mb-0">{{ idea.solution|nl2br|safe }}</p>
                     </div>
                 </div>
             
@@ -141,7 +156,7 @@
                         <span>Дополнительная информация</span>
                     </h5>
                     <div class="ps-3 border-start border-3 border-primary bg-light bg-opacity-10 p-3 rounded-end">
-                        <p class="mb-0">{{ idea.description|urlize(target="_blank") }}</p>
+                        <p class="mb-0">{{ idea.description|nl2br|safe }}</p>
                     </div>
                 </div>
                 {% endif %}
@@ -155,7 +170,7 @@
                     <span>Комментарий модератора</span>
                 </h5>
                 <div class="ps-3 border-start border-3 border-secondary bg-light bg-opacity-10 p-3 rounded-end">
-                    <p class="mb-0">{{ idea.moderator_feedback|urlize(target="_blank") }}</p>
+                    <p class="mb-0">{{ idea.moderator_feedback|nl2br|safe }}</p>
                 </div>
             </div>
             {% endif %}

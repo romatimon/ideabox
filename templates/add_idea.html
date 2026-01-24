@@ -27,7 +27,7 @@
                             <div class="form-group">
                                 {{ form.title.label(class="form-label fw-medium") }}
                                 {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), 
-                                placeholder="Краткое название идеи", 
+                                placeholder="Дайте краткое название", 
                                 required=True) }}
                                 {% for error in form.title.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
@@ -59,7 +59,7 @@
                             <div class="form-group">
                                 {{ form.author_name.label(class="form-label fw-medium") }}
                                 {{ form.author_name(class="form-control" + (" is-invalid" if form.author_name.errors else ""), 
-                                placeholder="Ваше имя (необязательно)") }}
+                                placeholder="Оставьте пустым, если хотите сохранить анонимность") }}
                                 {% for error in form.author_name.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                                 {% endfor %}
@@ -69,7 +69,7 @@
                             <div class="form-group">
                                 {{ form.contact_email.label(class="form-label fw-medium") }}
                                 {{ form.contact_email(class="form-control" + (" is-invalid" if form.contact_email.errors else ""), 
-                                placeholder="email@example.com (необязательно)") }}
+                                placeholder="IvanPM@rostest.ru (укажите рабочую почту)") }}
                                 {% for error in form.contact_email.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                                 {% endfor %}
@@ -84,7 +84,7 @@
                             <div>
                                 <h6 class="mb-1" style="color: #0d6efd;">Почему лучше указать контакты?</h6>
                                 <p class="mb-0 small">
-                                    Идеи с указанным именем и email получают приоритет при рассмотрении.<br>
+                                    Идеи с указанным именем и адресом получают приоритет при рассмотрении.<br>
                                     <strong>Ваши данные видны только модераторам</strong> и используются исключительно для обратной связи.
                                 </p>
                             </div>
@@ -98,7 +98,7 @@
                         {{ form.essence.label(class="form-label fw-medium") }}
                         {{ form.essence(class="form-control" + (" is-invalid" if form.essence.errors else ""), 
                            rows=3, 
-                           placeholder="Опишите суть вашего предложения и четко сформулируйте свою идею (обязательно)", 
+                           placeholder="Напишите, что можно улучшить и почему", 
                            required=True) }}
                         {% for error in form.essence.errors %}
                         <div class="invalid-feedback">{{ error }}</div>
@@ -109,7 +109,7 @@
                         {{ form.solution.label(class="form-label fw-medium") }}
                         {{ form.solution(class="form-control" + (" is-invalid" if form.solution.errors else ""), 
                            rows=3, 
-                           placeholder="Опишите ваше предлагаемое решение и подробно изложите способ реализации (обязательно)", 
+                           placeholder="Напишите, как можно улучшить процесс/реализовать идею", 
                            required=True) }}
                         {% for error in form.solution.errors %}
                         <div class="invalid-feedback">{{ error }}</div>
@@ -120,7 +120,7 @@
                         {{ form.description.label(class="form-label fw-medium") }}
                         {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), 
                            rows=3, 
-                           placeholder="Любая дополнительная информация (необязательно)") }}
+                           placeholder="Если что-то важное не вошло в описание идеи и вариантов решения") }}
                         {% for error in form.description.errors %}
                         <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
@@ -174,6 +174,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('categorySelect');
     const descriptionContainer = document.getElementById('categoryDescription');
     const descriptionText = document.getElementById('descriptionText');
+    const fileInput = document.getElementById('fileInput'); // Добавляем ссылку на fileInput
+    const fileList = document.getElementById('fileList'); // Добавляем ссылку на fileList
+    const filePreview = document.getElementById('filePreview'); // Добавляем ссылку на filePreview
+    const ideaForm = document.getElementById('ideaForm'); // Добавляем ссылку на ideaForm
+    const submitBtn = document.getElementById('submitBtn'); // Добавляем ссылку на submitBtn
     
     // Создаем объект с описаниями категорий прямо в JavaScript
     const categoryDescriptions = {
@@ -185,6 +190,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция для обновления описания категории
     function updateCategoryDescription() {
         const selectedValue = categorySelect.value;
+        
+        // Если выбрана пустая категория, скрываем описание
+        if (!selectedValue || selectedValue === '') {
+            descriptionContainer.style.display = 'none';
+            return;
+        }
+        
         const description = categoryDescriptions[selectedValue];
         
         if (description && description.trim() !== '') {
@@ -196,58 +208,72 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обработчик изменения категории
-    categorySelect.addEventListener('change', updateCategoryDescription);
-    
-    // Инициализация описания при загрузке
-    updateCategoryDescription();
+    if (categorySelect) {
+        categorySelect.addEventListener('change', updateCategoryDescription);
+        // Инициализация описания при загрузке
+        updateCategoryDescription();
+    }
     
     // Обработка выбора файлов
-    fileInput.addEventListener('change', function() {
-        fileList.innerHTML = '';
-        
-        if (this.files.length > 0) {
-            filePreview.classList.remove('d-none');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            fileList.innerHTML = '';
             
-            for (let i = 0; i < this.files.length; i++) {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            if (this.files.length > 0) {
+                filePreview.classList.remove('d-none');
                 
-                const fileInfo = document.createElement('span');
-                fileInfo.innerHTML = `<i class="bi bi-file-earmark"></i> ${this.files[i].name} (${formatFileSize(this.files[i].size)})`;
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'btn btn-sm btn-outline-danger';
-                removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
-                removeBtn.setAttribute('aria-label', 'Удалить файл');
-                removeBtn.onclick = (function(file) {
-                    return function(e) {
-                        e.preventDefault();
-                        const dt = new DataTransfer();
-                        for (let j = 0; j < fileInput.files.length; j++) {
-                            if (fileInput.files[j] !== file) {
-                                dt.items.add(fileInput.files[j]);
+                for (let i = 0; i < this.files.length; i++) {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    
+                    const fileInfo = document.createElement('span');
+                    fileInfo.innerHTML = `<i class="bi bi-file-earmark"></i> ${this.files[i].name} (${formatFileSize(this.files[i].size)})`;
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'btn btn-sm btn-outline-danger';
+                    removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                    removeBtn.setAttribute('aria-label', 'Удалить файл');
+                    removeBtn.onclick = (function(file) {
+                        return function(e) {
+                            e.preventDefault();
+                            const dt = new DataTransfer();
+                            for (let j = 0; j < fileInput.files.length; j++) {
+                                if (fileInput.files[j] !== file) {
+                                    dt.items.add(fileInput.files[j]);
+                                }
                             }
-                        }
-                        fileInput.files = dt.files;
-                        fileInput.dispatchEvent(new Event('change'));
-                    };
-                })(this.files[i]);
-                
-                listItem.appendChild(fileInfo);
-                listItem.appendChild(removeBtn);
-                fileList.appendChild(listItem);
+                            fileInput.files = dt.files;
+                            fileInput.dispatchEvent(new Event('change'));
+                        };
+                    })(this.files[i]);
+                    
+                    listItem.appendChild(fileInfo);
+                    listItem.appendChild(removeBtn);
+                    fileList.appendChild(listItem);
+                }
+            } else {
+                filePreview.classList.add('d-none');
             }
-        } else {
-            filePreview.classList.add('d-none');
-        }
-    });
+        });
+    }
     
     // Обработка отправки формы
-    ideaForm.addEventListener('submit', function() {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Отправка...';
-    });
-    
+    if (ideaForm) {
+        ideaForm.addEventListener('submit', function(e) {
+            // Проверяем, что выбрана категория
+            if (categorySelect && (!categorySelect.value || categorySelect.value === '')) {
+                e.preventDefault(); // Останавливаем отправку формы
+                alert('Пожалуйста, выберите категорию для идеи');
+                categorySelect.focus();
+                return false;
+            }
+            
+            // Если проверка прошла, показываем индикатор загрузки
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Отправка...';
+        });
+    }
+        
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;

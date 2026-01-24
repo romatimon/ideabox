@@ -30,7 +30,8 @@
                             <option value="all" {% if request.args.get('status') == 'all' %}selected{% endif %}>Все статусы</option>
                             <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>На рассмотрении</option>
                             <option value="approved" {% if request.args.get('status') == 'approved' %}selected{% endif %}>Одобрено</option>
-                            <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>В работе</option>
+                            <option value="partially_approved" {% if request.args.get('status') == 'partially_approved' %}selected{% endif %}>Одобрено (частично)</option>
+                            <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>На реализации</option>
                             <option value="implemented" {% if request.args.get('status') == 'implemented' %}selected{% endif %}>Реализовано</option>
                             <option value="rejected" {% if request.args.get('status') == 'rejected' %}selected{% endif %}>Отклонено</option>
                         </select>
@@ -167,7 +168,15 @@
                             </td>
                             <td>{{ idea.category }}</td>
                             <td>
-                                <span class="badge bg-{{ 'success' if idea.status == idea.STATUS_APPROVED else 'warning' if idea.status == idea.STATUS_PENDING else 'danger' if idea.status == idea.STATUS_REJECTED else 'info' if idea.status == idea.STATUS_IN_PROGRESS else 'primary' if idea.status == idea.STATUS_IMPLEMENTED else 'secondary' }}">
+                                <span class="badge bg-{{ 
+                                    'success' if idea.status == idea.STATUS_APPROVED 
+                                    else 'info' if idea.status == idea.STATUS_PARTIALLY_APPROVED
+                                    else 'warning' if idea.status == idea.STATUS_PENDING 
+                                    else 'danger' if idea.status == idea.STATUS_REJECTED 
+                                    else 'primary' if idea.status == idea.STATUS_IN_PROGRESS 
+                                    else 'success' if idea.status == idea.STATUS_IMPLEMENTED 
+                                    else 'secondary' 
+                                }}">
                                     {{ idea.status_display() }}
                                 </span>
                             </td>

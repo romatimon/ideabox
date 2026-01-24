@@ -49,6 +49,22 @@ ALLOWED_EXTENSIONS = {'jpg', 'png', 'pdf', 'doc', 'docx', 'xls', 'xlsx'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
+@app.template_filter('nl2br')
+def nl2br_filter(value):
+    """Преобразует переносы строк в HTML теги <br>."""
+    if not value:
+        return ''
+    
+    # Преобразуем в строку
+    value = str(value)
+    
+    # Заменяем все виды переносов строк
+    # Сначала заменяем \r\n, потом \n, потом \r
+    value = value.replace('\r\n', '<br>').replace('\n', '<br>').replace('\r', '<br>')
+    
+    return value
+
+
 # Вспомогательные функции
 def allowed_file(filename):
     """Проверяет, разрешено ли расширение файла."""
@@ -144,9 +160,7 @@ def init_moderators():
 
 def init_categories():
     """Инициализирует базовые категории идей."""
-    default_categories = [
-        {'name': 'Общее', 'description': 'Общие идеи и предложения'},
-    ]
+    default_categories = []  # Пустой список
     
     for cat in default_categories:
         if not db.session.execute(
@@ -246,12 +260,18 @@ def index():
 def add_idea():
     """Добавление новой идеи."""
     form = IdeaForm()
+    
     if form.validate_on_submit():
         try:
+            # Проверяем, что выбрана категория
+            if not form.category.data:
+                flash('Пожалуйста, выберите категорию', 'danger')
+                return render_template('add_idea.html', form=form)
+            
             idea = Idea(
                 title=form.title.data.strip(),
-                essence=form.essence.data.strip(),
-                solution=form.solution.data.strip(),
+                essence=form.essence.data,
+                solution=form.solution.data,
                 description=form.description.data.strip() if form.description.data else None,
                 author_name=form.author_name.data.strip() if form.author_name.data else None,
                 contact_email=form.contact_email.data.strip() if form.contact_email.data else None,
@@ -407,6 +427,7 @@ def stats():
     total_ideas = Idea.query.count()
     pending_ideas = Idea.query.filter_by(status=Idea.STATUS_PENDING).count()
     approved_ideas = Idea.query.filter_by(status=Idea.STATUS_APPROVED).count()
+    partially_approved_ideas = Idea.query.filter_by(status=Idea.STATUS_PARTIALLY_APPROVED).count()
     in_progress_ideas = Idea.query.filter_by(status=Idea.STATUS_IN_PROGRESS).count()
     implemented_ideas = Idea.query.filter_by(status=Idea.STATUS_IMPLEMENTED).count()
     rejected_ideas = Idea.query.filter_by(status=Idea.STATUS_REJECTED).count()
@@ -417,6 +438,7 @@ def stats():
                          total_ideas=total_ideas,
                          pending_ideas=pending_ideas,
                          approved_ideas=approved_ideas,
+                         partially_approved_ideas=partially_approved_ideas,
                          in_progress_ideas=in_progress_ideas,
                          implemented_ideas=implemented_ideas,
                          rejected_ideas=rejected_ideas)
@@ -447,9 +469,8 @@ def export_ideas():
         
         # Заголовки
         headers = [
-            "ID", "Заголовок", "Проблема", "Решение", 
-            "Описание", "Автор", 
-            "Анонимно", "Категория", "Статус", "Дата создания",
+            "ID", "Заголовок", "Проблема", "Решение", "Дополнительно",
+            "Автор", "Категория", "Статус", "Дата создания",
             "Кол-во файлов"
         ]
         ws.append(headers)
@@ -476,9 +497,8 @@ def export_ideas():
             'B': 20,  # Заголовок
             'C': 40,  # Проблема
             'D': 40,  # Решение
-            'E': 40,  # Описание
+            'E': 40,  # Дополнительно
             'F': 15,  # Автор
-            'G': 10,   # Анонимно
             'H': 15,  # Категория
             'I': 15,  # Статус
             'J': 15,  # Дата создания
@@ -541,7 +561,7 @@ def edit_idea(id):
         idea.moderator_feedback = form.moderator_feedback.data
         
         # Обновляем поля вручную
-        idea.title = form.title.data
+        idea.title = form.title.data.strip()
         idea.essence = form.essence.data
         idea.solution = form.solution.data
         idea.description = form.description.data
@@ -583,6 +603,26 @@ def approve_idea(id):
     except Exception as e:
         db.session.rollback()
         flash(f'Ошибка при одобрении идеи: {str(e)}', 'danger')
+    return redirect(url_for('idea_detail', id=id))
+
+
+@app.route('/idea/<int:id>/partially_approve', methods=['POST'])
+@moderator_required
+def partially_approve_idea(id):
+    """Частичное одобрение идеи."""
+    try:
+        idea = db.session.get(Idea, id) or abort(404)
+        old_status = idea.status
+        idea.status = Idea.STATUS_PARTIALLY_APPROVED
+        db.session.commit()
+
+        # 🔔 Уведомление автору об изменении статуса
+        send_status_update_notification(idea, old_status, idea.status)
+
+        flash('Идея одобрена частично', 'info')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при частичном одобрении идеи: {str(e)}', 'danger')
     return redirect(url_for('idea_detail', id=id))
 
 
@@ -755,27 +795,39 @@ def delete_category(id):
     if form.validate_on_submit():
         category = IdeaCategory.query.get_or_404(id)
         
-        # Проверяем, не пытаемся ли удалить категорию "Общее"
-        if category.name == 'Общее':
-            flash('Нельзя удалить основную категорию "Общее"', 'danger')
-            return redirect(url_for('manage_categories'))
-        
         # Находим идеи в этой категории
         ideas_in_category = Idea.query.filter_by(category=category.name).all()
         
         try:
-            # Удаляем категорию у всех идей в этой категории
-            for idea in ideas_in_category:
-                idea.category = 'Общее'
+            # Ищем другую активную категорию для перемещения идей
+            other_category = IdeaCategory.query.filter(
+                IdeaCategory.id != id,
+                IdeaCategory.is_active == True
+            ).first()
             
-            # Удаляем саму категорию
-            db.session.delete(category)
-            db.session.commit()
-            
-            if ideas_in_category:
-                flash(f'Категория "{category.name}" удалена. {len(ideas_in_category)} идей перемещено в категорию "Общее".', 'success')
+            if other_category:
+                new_category = other_category.name
+                # Перемещаем категорию у всех идей в этой категории
+                for idea in ideas_in_category:
+                    idea.category = new_category
+                
+                # Удаляем саму категорию
+                db.session.delete(category)
+                db.session.commit()
+                
+                if ideas_in_category:
+                    flash(f'Категория "{category.name}" удалена. {len(ideas_in_category)} идей перемещено в категорию "{new_category}".', 'success')
+                else:
+                    flash(f'Категория "{category.name}" успешно удалена', 'success')
             else:
-                flash(f'Категория "{category.name}" успешно удалена', 'success')
+                # Если это последняя категория и в ней есть идеи, нельзя удалить
+                if ideas_in_category:
+                    flash('Нельзя удалить последнюю категорию, в которой есть идеи. Сначала создайте новую категорию или удалите/переместите идеи.', 'danger')
+                else:
+                    # Если это последняя категория и она пустая - можно удалить
+                    db.session.delete(category)
+                    db.session.commit()
+                    flash(f'Категория "{category.name}" успешно удалена', 'success')
                 
         except Exception as e:
             db.session.rollback()

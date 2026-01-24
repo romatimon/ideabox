@@ -11,13 +11,14 @@ class Idea(db.Model):
     # Константы статусов
     STATUS_PENDING = 'pending'
     STATUS_APPROVED = 'approved'
+    STATUS_PARTIALLY_APPROVED = 'partially_approved'
     STATUS_IN_PROGRESS = 'in_progress'
     STATUS_IMPLEMENTED = 'implemented'
     STATUS_REJECTED = 'rejected'
     
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
-    essence = db.Column(db.Text, nullable=False)  # Суть предложения
+    essence = db.Column(db.Text, nullable=False)  # Суть проблемы
     solution = db.Column(db.Text, nullable=False)  # Предлагаемое решение
     description = db.Column(db.Text)  # Дополнительное описание
     author_name = db.Column(db.String(50))  # Имя автора
@@ -38,11 +39,11 @@ class Idea(db.Model):
     )
     
     def status_display(self):
-        """Возвращает читаемое представление статуса."""
         status_map = {
             self.STATUS_PENDING: 'На рассмотрении',
             self.STATUS_APPROVED: 'Одобрено',
-            self.STATUS_IN_PROGRESS: 'В работе',
+            self.STATUS_PARTIALLY_APPROVED: 'Одобрено (частично)',
+            self.STATUS_IN_PROGRESS: 'На реализации',
             self.STATUS_IMPLEMENTED: 'Реализовано',
             self.STATUS_REJECTED: 'Отклонено'
         }

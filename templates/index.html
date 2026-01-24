@@ -26,8 +26,10 @@
                     <label for="statusFilter" class="form-label">Статус</label>
                     <select id="statusFilter" name="status" class="form-select">
                         <option value="all" {% if current_status=='all' %}selected{% endif %}>Все статусы</option>
+                        <option value="pending" {% if current_status=='pending' %}selected{% endif %}>На рассмотрении</option>
                         <option value="approved" {% if current_status=='approved' %}selected{% endif %}>Одобрено</option>
-                        <option value="in_progress" {% if current_status=='in_progress' %}selected{% endif %}>В работе</option>
+                        <option value="partially_approved" {% if current_status=='partially_approved' %}selected{% endif %}>Одобрено (частично)</option>
+                        <option value="in_progress" {% if current_status=='in_progress' %}selected{% endif %}>На реализации</option>
                         <option value="implemented" {% if current_status=='implemented' %}selected{% endif %}>Реализовано</option>
                     </select>
                 </div>
@@ -88,7 +90,15 @@
             <div class="card h-100 shadow-sm idea-card">
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="badge bg-{{ 'success' if idea.status == idea.STATUS_APPROVED else 'warning' if idea.status == idea.STATUS_PENDING else 'danger' if idea.status == idea.STATUS_REJECTED else 'info' if idea.status == idea.STATUS_IN_PROGRESS else 'primary' if idea.status == idea.STATUS_IMPLEMENTED else 'secondary' }}">
+                    <span class="badge bg-{{ 
+                        'success' if idea.status == idea.STATUS_APPROVED 
+                        else 'info' if idea.status == idea.STATUS_PARTIALLY_APPROVED
+                        else 'warning' if idea.status == idea.STATUS_PENDING 
+                        else 'danger' if idea.status == idea.STATUS_REJECTED 
+                        else 'primary' if idea.status == idea.STATUS_IN_PROGRESS 
+                        else 'success' if idea.status == idea.STATUS_IMPLEMENTED 
+                        else 'secondary' 
+                    }}">
                         {{ idea.status_display() }}
                     </span>
                         <small class="text-muted">{{ idea.created_at.strftime('%d.%m.%Y') }}</small>

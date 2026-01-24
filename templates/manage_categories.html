@@ -87,11 +87,10 @@
                                         
                                         <!-- Форма удаления -->
                                         <form method="POST" action="{{ url_for('delete_category', id=category.id) }}"
-                                            onsubmit="return confirm('Удалить категорию «{{ category.name }}»? Все идеи будут перемещены в категорию «Общее».')">
+                                            onsubmit="return confirm('Удалить категорию «{{ category.name }}»? Все идеи будут автоматически перемещены в другую активную категорию.')">
                                             {{ delete_form.hidden_tag() }}
                                             <button type="submit" 
-                                                    class="btn btn-sm btn-danger" 
-                                                    {% if category.name == 'Общее' %}disabled title="Нельзя удалить основную категорию"{% endif %}>
+                                                    class="btn btn-sm btn-danger">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -106,8 +105,8 @@
                 <!-- Обновленное предупреждение -->
                 <div class="alert alert-info mt-3">
                     <i class="bi bi-info-circle me-2"></i>
-                    При удалении категории все идеи из этой категории будут автоматически перемещены в категорию "Общее".
-                    При изменении названия категории все связанные идеи будут автоматически обновлены.
+                    <strong>Важно:</strong> Если вы удаляете категорию, в которой есть идеи, они будут автоматически перемещены в другую активную категорию.
+                    <strong>Нельзя удалить последнюю категорию, если в ней есть идеи.</strong> Сначала создайте новую категорию.
                 </div>
                 
                 {% else %}

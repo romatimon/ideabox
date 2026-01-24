@@ -13,50 +13,50 @@ class IdeaForm(FlaskForm):
     """Форма для добавления новой идеи."""
     
     title = StringField(
-        'Заголовок идеи',
+        'Название идеи',
         validators=[
             DataRequired(message="Поле обязательно"),
             Length(max=100, message="Не более 100 символов")
         ],
         render_kw={
-            "placeholder": "Краткое название вашего предложения",
+            "placeholder": "Дайте краткое название",
             "class": "form-control-lg"
         }
     )
     
     essence = TextAreaField(
-        'Суть предложения',
+        'В чем суть идеи',
         validators=[
             DataRequired(message="Поле обязательно"),
             Length(min=10, message="Минимум 10 символов")
         ],
         render_kw={
             "rows": 3,
-            "placeholder": "Что именно вы предлагаете улучшить? Опишите суть вашего предложения."
+            "placeholder": "Напишите, что можно улучшить и почему"
         }
     )
     
     solution = TextAreaField(
-        'Предлагаемое решение',
+        'Варианты решения',
         validators=[
             DataRequired(message="Поле обязательно"),
             Length(min=10, message="Минимум 10 символов")
         ],
         render_kw={
             "rows": 3,
-            "placeholder": "Как именно реализовать ваше предложение? Опишите конкретные шаги."
+            "placeholder": "Напишите, как можно улучшить процесс/реализовать идею"
         }
     )
     
     description = TextAreaField(
-        'Дополнительное описание',
+        'Дополнительно',
         validators=[
             Optional(),
             Length(max=500, message="Не более 500 символов")
         ],
         render_kw={
             "rows": 3,
-            "placeholder": "Любая дополнительная информация"
+            "placeholder": "Если что-то важное не вошло в описание идеи и вариантов решения"
         }
     )
     
@@ -76,13 +76,13 @@ class IdeaForm(FlaskForm):
     )
     
     author_name = StringField(
-        'Ваше имя',
+        'Имя',
         validators=[
             Optional(),
             Length(max=50, message="Не более 50 символов")
         ],
         render_kw={
-            "placeholder": "Оставьте пустым, если не хотите указывать"
+            "placeholder": "Оставьте пустым, если хотите сохранить анонимность"
         }
     )
 
@@ -94,7 +94,7 @@ class IdeaForm(FlaskForm):
             Length(max=120)
         ],
         render_kw={
-            "placeholder": "example@company.com",
+            "placeholder": "IvanPM@rostest.ru (укажите рабочую почту)",
             "class": "form-control"
         }
     )
@@ -114,10 +114,19 @@ class IdeaForm(FlaskForm):
         """Инициализация формы с загрузкой категорий."""
         super(IdeaForm, self).__init__(*args, **kwargs)
         categories = IdeaCategory.query.filter_by(is_active=True).order_by('name').all()
-        self.category.choices = [(c.name, c.name) for c in categories] or [('Общее', 'Общее')]
-
+        
+        # Добавляем пустую опцию в начало списка
+        category_choices = [('', '--- Выберите категорию ---')]
+        category_choices.extend([(c.name, c.name) for c in categories])
+        
+        self.category.choices = category_choices
+        
         # Сохраняем описания для использования в шаблоне
         self.category.descriptions = {c.name: c.description or '' for c in categories}
+        
+        # Если нет категорий, оставляем только пустой выбор
+        if not categories:
+            self.category.choices = [('', '--- Нет доступных категорий ---')]
 
 
 class ModeratorLoginForm(FlaskForm):
@@ -145,7 +154,7 @@ class EditIdeaForm(FlaskForm):
     """Форма редактирования идеи модератором."""
     
     title = StringField(
-        'Заголовок идеи',
+        'Название идеи',
         validators=[
             DataRequired(message="Поле обязательно"),
             Length(max=100, message="Не более 100 символов")
@@ -154,19 +163,19 @@ class EditIdeaForm(FlaskForm):
     )
     
     essence = TextAreaField(
-        'Предложение',
+        'В чем суть идеи',
         validators=[DataRequired(message="Поле обязательно")],
         render_kw={"class": "form-control", "rows": 4}
     )
     
     solution = TextAreaField(
-        'Решение',
+        'Варианты решения',
         validators=[DataRequired(message="Поле обязательно")],
         render_kw={"class": "form-control", "rows": 4}
     )
     
     description = TextAreaField(
-        'Дополнительное описание',
+        'Дополнительно',
         validators=[Optional()],
         render_kw={"class": "form-control", "rows": 3}
     )
@@ -182,7 +191,8 @@ class EditIdeaForm(FlaskForm):
         choices=[
             (Idea.STATUS_PENDING, 'На рассмотрении'),
             (Idea.STATUS_APPROVED, 'Одобрено'),
-            (Idea.STATUS_IN_PROGRESS, 'В работе'),
+            (Idea.STATUS_PARTIALLY_APPROVED, 'Одобрено (частично)'),
+            (Idea.STATUS_IN_PROGRESS, 'На реализации'),
             (Idea.STATUS_IMPLEMENTED, 'Реализовано'),
             (Idea.STATUS_REJECTED, 'Отклонено')
         ], 
@@ -209,7 +219,16 @@ class EditIdeaForm(FlaskForm):
         """Инициализация формы с загрузкой категорий."""
         super(EditIdeaForm, self).__init__(*args, **kwargs)
         categories = IdeaCategory.query.filter_by(is_active=True).order_by('name').all()
-        self.category.choices = [(c.name, c.name) for c in categories] or [('Общее', 'Общее')]
+        self.category.choices = [(c.name, c.name) for c in categories]
+        
+        # Если нет категорий, добавляем пустой выбор
+        if not categories:
+            self.category.choices = [('', '--- Нет категорий ---')]
+
+        if kwargs.get('obj'):
+            # Восстанавливаем переносы строк для редактирования
+            self.essence.data = kwargs['obj'].essence
+            self.solution.data = kwargs['obj'].solution
 
 
 class CategoryForm(FlaskForm):

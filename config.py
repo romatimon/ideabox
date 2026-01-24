@@ -8,7 +8,7 @@ SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.yandex.ru')
 SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
 FROM_EMAIL = os.getenv('FROM_EMAIL', 'rost3st@yandex.ru')
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
-MODERATOR_EMAIL = os.getenv('MODERATOR_EMAIL', 'RomanYT@rostest.ru')
+MODERATOR_EMAIL = os.getenv('MODERATOR_EMAIL', 'mod-ideabox@rtmsk.ru')
 
 
 # # Новые настройки для проекта
