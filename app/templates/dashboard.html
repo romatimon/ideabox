@@ -6,7 +6,7 @@
         <div class="card-header text-white" style="background-color: var(--primary-color);">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Личный кабинет модератора</h2>
-                <a href="{{ url_for('stats') }}" class="btn btn-sm" style="background-color: white; color: var(--primary-color);">
+                <a href="{{ url_for('moderator.stats') }}" class="btn btn-sm" style="background-color: white; color: var(--primary-color);">
                     <i class="bi bi-graph-up"></i> Статистика
                 </a>
             </div>
@@ -60,7 +60,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>
-                                <a href="{{ url_for('mod_dashboard', 
+                                <a href="{{ url_for('moderator.dashboard', 
                                     status=request.args.get('status', 'all'),
                                     published=request.args.get('published', 'all'),
                                     category=request.args.get('category', 'all'),
@@ -74,7 +74,7 @@
                                 </a>
                             </th>
                             <th>
-                                <a href="{{ url_for('mod_dashboard', 
+                                <a href="{{ url_for('moderator.dashboard', 
                                     status=request.args.get('status', 'all'),
                                     published=request.args.get('published', 'all'),
                                     category=request.args.get('category', 'all'),
@@ -88,7 +88,7 @@
                                 </a>
                             </th>
                             <th>
-                                <a href="{{ url_for('mod_dashboard', 
+                                <a href="{{ url_for('moderator.dashboard', 
                                     status=request.args.get('status', 'all'),
                                     published=request.args.get('published', 'all'),
                                     category=request.args.get('category', 'all'),
@@ -102,7 +102,7 @@
                                 </a>
                             </th>
                             <th>
-                                <a href="{{ url_for('mod_dashboard', 
+                                <a href="{{ url_for('moderator.dashboard', 
                                     status=request.args.get('status', 'all'),
                                     published=request.args.get('published', 'all'),
                                     category=request.args.get('category', 'all'),
@@ -116,7 +116,7 @@
                                 </a>
                             </th>
                             <th>
-                                <a href="{{ url_for('mod_dashboard', 
+                                <a href="{{ url_for('moderator.dashboard', 
                                     status=request.args.get('status', 'all'),
                                     published=request.args.get('published', 'all'),
                                     category=request.args.get('category', 'all'),
@@ -131,7 +131,7 @@
                             </th>
                             <th>Публикация</th>
                             <th>
-                                <a href="{{ url_for('mod_dashboard', 
+                                <a href="{{ url_for('moderator.dashboard', 
                                     status=request.args.get('status', 'all'),
                                     published=request.args.get('published', 'all'),
                                     category=request.args.get('category', 'all'),
@@ -152,7 +152,7 @@
                         <tr>
                             <td>{{ idea.id }}</td>
                             <td>
-                                <a href="{{ url_for('idea_detail', id=idea.id) }}" class="text-decoration-none" style="color: var(--primary-color);">
+                                <a href="{{ url_for('public.idea_detail', id=idea.id) }}" class="text-decoration-none" style="color: var(--primary-color);">
                                     {{ idea.title|truncate(30) }}
                                 </a>
                             </td>
@@ -193,10 +193,10 @@
                             <td>{{ idea.created_at.strftime('%d.%m.%Y') }}</td>
                             <td>
                                 <div class="d-flex gap-2">
-                                    <a href="{{ url_for('edit_idea', id=idea.id) }}" class="btn btn-sm btn-outline-primary" title="Редактировать">
+                                    <a href="{{ url_for('moderator.edit_idea', id=idea.id) }}" class="btn btn-sm btn-outline-primary" title="Редактировать">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <form method="POST" action="{{ url_for('delete_idea', id=idea.id) }}" onsubmit="return confirm('Удалить идею?')">
+                                    <form method="POST" action="{{ url_for('moderator.delete_idea', id=idea.id) }}" onsubmit="return confirm('Удалить идею?')">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить">
                                             <i class="bi bi-trash"></i>
@@ -217,7 +217,7 @@
                     {# Кнопка "Назад" #}
                     {% if pagination.has_prev %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('mod_dashboard', 
+                        <a class="page-link" href="{{ url_for('dashboard', 
                             page=pagination.prev_num,
                             status=request.args.get('status', 'all'),
                             published=request.args.get('published', 'all'),
@@ -236,7 +236,7 @@
 
                     {# Всегда показываем первую страницу #}
                     <li class="page-item {% if pagination.page == 1 %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('mod_dashboard', 
+                        <a class="page-link" href="{{ url_for('moderator.dashboard', 
                             page=1,
                             status=request.args.get('status', 'all'),
                             published=request.args.get('published', 'all'),
@@ -257,7 +257,7 @@
                     {% for p in range([2, pagination.page-1]|max, [pagination.pages-1, pagination.page+2]|min + 1) %}
                         {% if p > 1 and p < pagination.pages %}
                         <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('mod_dashboard', 
+                            <a class="page-link" href="{{ url_for('moderator.dashboard', 
                                 page=p,
                                 status=request.args.get('status', 'all'),
                                 published=request.args.get('published', 'all'),
@@ -279,7 +279,7 @@
                     {# Всегда показываем последнюю страницу (если она не первая) #}
                     {% if pagination.pages > 1 %}
                     <li class="page-item {% if pagination.page == pagination.pages %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('mod_dashboard', 
+                        <a class="page-link" href="{{ url_for('moderator.dashboard', 
                             page=pagination.pages,
                             status=request.args.get('status', 'all'),
                             published=request.args.get('published', 'all'),
@@ -293,7 +293,7 @@
                     {# Кнопка "Вперед" #}
                     {% if pagination.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('mod_dashboard', 
+                        <a class="page-link" href="{{ url_for('moderator.dashboard', 
                             page=pagination.next_num,
                             status=request.args.get('status', 'all'),
                             published=request.args.get('published', 'all'),
@@ -323,10 +323,10 @@
 
             <!-- Дополнительные действия -->
             <div class="d-flex justify-content-between mt-4">
-                <a href="{{ url_for('export_ideas') }}" class="btn btn-outline-success">
+                <a href="{{ url_for('moderator.export_ideas') }}" class="btn btn-outline-success">
                     <i class="bi bi-file-excel me-2"></i>Экспорт в Excel
                 </a>
-                <a href="{{ url_for('manage_categories') }}" class="btn" style="background-color: var(--primary-color); color: white;">
+                <a href="{{ url_for('moderator.manage_categories') }}" class="btn" style="background-color: var(--primary-color); color: white;">
                     <i class="bi bi-tags me-2"></i>Управление категориями
                 </a>
             </div>

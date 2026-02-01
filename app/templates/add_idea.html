@@ -5,7 +5,7 @@
     <div class="card shadow-sm">
         <div class="card-header text-white" style="background-color: var(--primary-color);">
             <h4 class="mb-0 d-flex align-items-center">
-                <a href="{{ url_for('index') }}" class="btn btn-sm me-2" style="background-color: white; color: var(--primary-color);">
+                <a href="{{ url_for('public.index') }}" class="btn btn-sm me-2" style="background-color: white; color: var(--primary-color);">
                     <i class="bi bi-arrow-left"></i>
                 </a>
                 <span>Добавить новую идею</span>
@@ -159,7 +159,7 @@
                     <button type="submit" class="btn btn-lg" style="background-color: var(--primary-color); color: white;" id="submitBtn">
                         <i class="bi bi-send-fill me-2"></i>Отправить на модерацию
                     </button>
-                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <a href="{{ url_for('public.index') }}" class="btn btn-outline-secondary">
                         <i class="bi bi-x-circle me-2"></i>Отменить
                     </a>
                 </div>

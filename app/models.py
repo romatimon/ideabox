@@ -2,7 +2,7 @@ import os
 from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from extensions import db
+from .extensions import db
 
 
 class Idea(db.Model):

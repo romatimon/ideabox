@@ -1,360 +1,25 @@
-from datetime import datetime
+from flask import Blueprint, render_template, request, flash, redirect, url_for, abort, current_app, jsonify, send_file, session
 from functools import wraps
 from io import BytesIO
 import os
-
-from dotenv import load_dotenv
-from flask import (
-    Flask, abort, current_app, flash, jsonify, redirect, render_template, 
-    request, send_file, send_from_directory, session, url_for
-)
-from flask_wtf.csrf import CSRFProtect
-from openpyxl import Workbook
-from sqlalchemy import Engine, func, or_, select
 from werkzeug.utils import secure_filename
+from openpyxl import Workbook
+from datetime import datetime
+from sqlalchemy import func
 
-from extensions import db
-from forms import (
-    CategoryForm, DeleteCategoryForm, EditCategoryForm, EditIdeaForm, IdeaForm, ModeratorLoginForm
-)
-from models import Attachment, Idea, IdeaCategory, Moderator
-from notifications import send_new_idea_notification, send_author_confirmation, send_status_update_notification
+from app.extensions import db
+from app.forms import CategoryForm, DeleteCategoryForm, EditCategoryForm, EditIdeaForm
+from app.models import Attachment, Idea, IdeaCategory, Moderator
+from app.notifications import send_status_update_notification
+from .auth import moderator_required
 
-
-# Загрузка переменных окружения
-load_dotenv()
-
-
-# Инициализация приложения
-app = Flask(__name__)
-app.config.update(
-    SECRET_KEY=os.getenv('SECRET_KEY'),
-    SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI'),
-    UPLOAD_FOLDER='uploads',
-    MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16MB
-    WTF_CSRF_ENABLED=True
-)
-
-
-# Инициализация расширений
-csrf = CSRFProtect(app)
-db.init_app(app)
-
-
-# Конфигурация
-ALLOWED_EXTENSIONS = {'jpg', 'png', 'pdf', 'doc', 'docx', 'xls', 'xlsx'}
-
-
-# Создаем папку для загрузок
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-
-@app.template_filter('nl2br')
-def nl2br_filter(value):
-    """Преобразует переносы строк в HTML теги <br>."""
-    if not value:
-        return ''
-    
-    # Преобразуем в строку
-    value = str(value)
-    
-    # Заменяем все виды переносов строк
-    # Сначала заменяем \r\n, потом \n, потом \r
-    value = value.replace('\r\n', '<br>').replace('\n', '<br>').replace('\r', '<br>')
-    
-    return value
-
-
-# Вспомогательные функции
-def allowed_file(filename):
-    """Проверяет, разрешено ли расширение файла."""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    """Включает поддержку внешних ключей для SQLite."""
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
-
-
-def moderator_required(f):
-    """Декоратор для проверки авторизации модератора."""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('moderator_id'):
-            flash('Требуется авторизация модератора', 'warning')
-            return redirect(url_for('moderator_login'))
-            
-        moderator = db.session.get(Moderator, session['moderator_id'])
-        if not moderator:
-            session.pop('moderator_id', None)
-            flash('Сессия устарела, войдите снова', 'warning')
-            return redirect(url_for('moderator_login'))
-            
-        return f(*args, **kwargs)
-    return decorated_function
-
-
-# Контекстные процессоры
-@app.context_processor
-def utility_processor():
-    def filesizeformat(value):
-        """Правильное форматирование размера файла."""
-        if value == 0:
-            return "0 B"
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if value < 1024.0:
-                return f"{value:.1f} {unit}"
-            value /= 1024.0
-        return f"{value:.1f} TB"
-    
-    return dict(filesizeformat=filesizeformat, os=os)
-
-
-@app.context_processor
-def inject_moderator():
-    """Добавляет информацию о текущем модераторе в контекст шаблонов."""
-    if 'moderator_id' in session:
-        moderator = db.session.get(Moderator, session['moderator_id'])
-        return {'current_moderator': moderator}
-    return {}
-
-
-# Фильтры Jinja2
-app.jinja_env.filters['filesizeformat'] = lambda value: value
-
-
-# Функции инициализации
-def init_moderators():
-    """Инициализирует учетные записи модераторов."""
-    moderators = [
-        {
-            'username': 'vlasuk', 
-            'first_name': 'Ольга', 
-            'last_name': 'Власюк',
-            'password': os.getenv('MODERATOR_VLASUK_PWD'),
-            'can_manage_categories': True
-        },
-        {
-            'username': 'schekoldina', 
-            'first_name': 'Анастасия', 
-            'last_name': 'Щеколдина',
-            'password': os.getenv('MODERATOR_SCHEKOLDINA_PWD'),
-            'can_manage_categories': True
-        }
-    ]
-    
-    for mod in moderators:
-        if not Moderator.query.filter_by(username=mod['username']).first():
-            moderator = Moderator(
-                username=mod['username'],
-                first_name=mod['first_name'],
-                last_name=mod['last_name'],
-                can_manage_categories=mod['can_manage_categories']
-            )
-            moderator.set_password(mod['password'])
-            db.session.add(moderator)
-    db.session.commit()
-
-
-def init_categories():
-    """Инициализирует базовые категории идей."""
-    default_categories = []  # Пустой список
-    
-    for cat in default_categories:
-        if not db.session.execute(
-            db.select(IdeaCategory).where(IdeaCategory.name == cat['name'])
-        ).scalar_one_or_none():
-            category = IdeaCategory(
-                name=cat['name'],
-                description=cat['description']
-            )
-            db.session.add(category)
-    db.session.commit()
-
-
-# Маршруты аутентификации
-@app.route('/moderator/login', methods=['GET', 'POST'])
-def moderator_login():
-    """Страница входа для модераторов."""
-    if session.get('moderator_id'):
-        return redirect(url_for('index'))
-        
-    form = ModeratorLoginForm()
-    if form.validate_on_submit():
-        moderator = db.session.execute(
-            select(Moderator).where(Moderator.username == form.username.data)
-        ).scalar_one_or_none()
-        if moderator and moderator.check_password(form.password.data):
-            session['moderator_id'] = moderator.id
-            flash(f'Добро пожаловать, {moderator.full_name}!', 'success')
-            return redirect(url_for('index'))
-        flash('Неверные учетные данные', 'danger')
-    return render_template('moderator_login.html', form=form)
-
-
-@app.route('/moderator/logout')
-def moderator_logout():
-    """Выход из системы модератора."""
-    session.pop('moderator_id', None)
-    flash('Вы вышли из режима модератора', 'info')
-    return redirect(url_for('index'))
-
-
-# Основные маршруты
-@app.route('/')
-def index():
-    """Главная страница со списком идей."""
-    page = request.args.get('page', 1, type=int)
-    per_page = 6
-
-    # Получаем параметры фильтрации
-    status_filter = request.args.get('status', 'all')
-    category_filter = request.args.get('category', 'all')
-    search_query = request.args.get('search', '')
-    sort_by = request.args.get('sort', 'newest')
-
-    # Для ВСЕХ пользователей (включая модераторов) показываем только опубликованные идеи на главной
-    query = Idea.query.filter_by(is_published=True)
-
-    # Применяем фильтры
-    if status_filter != 'all':
-        query = query.filter(Idea.status == status_filter)
-
-    if category_filter != 'all':
-        query = query.filter(Idea.category == category_filter)
-
-    if search_query:
-        query = query.filter(or_(
-            Idea.title.ilike(f'%{search_query}%'),
-            Idea.essence.ilike(f'%{search_query}%'),
-            Idea.solution.ilike(f'%{search_query}%'),
-            Idea.description.ilike(f'%{search_query}%')
-        ))
-
-    # Применяем сортировку
-    if sort_by == 'newest':
-        query = query.order_by(Idea.created_at.desc())
-    else:
-        query = query.order_by(Idea.created_at.asc())
-
-    # Пагинация
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    ideas = pagination.items
-
-    # Получаем список категорий для фильтра
-    categories = IdeaCategory.query.filter_by(is_active=True).order_by(IdeaCategory.name).all()
-
-    return render_template('index.html', 
-                         ideas=ideas,
-                         pagination=pagination,
-                         current_status=status_filter,
-                         current_category=category_filter,
-                         current_sort=sort_by,
-                         search_query=search_query,
-                         categories=categories)
-
-
-@app.route('/add_idea', methods=['GET', 'POST'])
-def add_idea():
-    """Добавление новой идеи."""
-    form = IdeaForm()
-    
-    if form.validate_on_submit():
-        try:
-            # Проверяем, что выбрана категория
-            if not form.category.data:
-                flash('Пожалуйста, выберите категорию', 'danger')
-                return render_template('add_idea.html', form=form)
-            
-            idea = Idea(
-                title=form.title.data.strip(),
-                essence=form.essence.data,
-                solution=form.solution.data,
-                description=form.description.data.strip() if form.description.data else None,
-                author_name=form.author_name.data.strip() if form.author_name.data else None,
-                contact_email=form.contact_email.data.strip() if form.contact_email.data else None,
-                is_anonymous=False,
-                category=form.category.data,
-                status=Idea.STATUS_PENDING
-            )
-            
-            db.session.add(idea)
-            db.session.flush()  # Получаем ID до коммита
-            
-            # Обработка файлов
-            if 'attachments' in request.files:
-                files = request.files.getlist('attachments')
-                for file in files:
-                    if file and file.filename and allowed_file(file.filename):
-                        filename = secure_filename(file.filename)
-                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{idea.id}_{filename}")
-                        file.save(os.path.join(current_app.root_path, filepath))
-                        
-                        attachment = Attachment(
-                            filename=filename,
-                            filepath=filepath,
-                            idea_id=idea.id
-                        )
-                        db.session.add(attachment)
-            
-            db.session.commit()
-
-            # Уведомление модератору
-            send_new_idea_notification(idea)
-            
-            # Подтверждение автору (если указан email)
-            send_author_confirmation(idea)
-            
-            flash('Идея успешно отправлена на модерацию!', 'success')
-            return redirect(url_for('index'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Ошибка при сохранении идеи: {str(e)}', 'danger')
-    
-    return render_template('add_idea.html', form=form)
-
-
-@app.route('/idea/<int:id>')
-def idea_detail(id):
-    """Детальная страница идеи."""
-    idea = db.session.get(Idea, id) or abort(404)
-    
-    # Проверка публикации для обычных пользователей
-    if not session.get('moderator_id') and not idea.is_published:
-        abort(403)
-    
-    current_moderator = None
-    if 'moderator_id' in session:
-        current_moderator = db.session.get(Moderator, session['moderator_id'])
-    
-    return render_template(
-        'idea_detail.html', 
-        idea=idea,
-        current_moderator=current_moderator
-    )
-
-
-# Маршруты для работы с файлами
-@app.route('/download/<int:id>')
-def download_attachment(id):
-    """Скачивание прикрепленного файла."""
-    attachment = Attachment.query.get_or_404(id)
-    if not os.path.exists(os.path.join(current_app.root_path, attachment.filepath)):
-        abort(404)
-    return send_from_directory(
-        os.path.dirname(os.path.join(current_app.root_path, attachment.filepath)),
-        os.path.basename(attachment.filepath),
-        as_attachment=True
-    )
+moderator_bp = Blueprint("moderator", __name__, url_prefix="/moderator")
 
 
 # Маршруты модератора
-@app.route('/mod_dashboard')
+@moderator_bp.route('/dashboard')
 @moderator_required
-def mod_dashboard():
+def dashboard():
     """Панель управления модератора."""
     page = request.args.get('page', 1, type=int)
     per_page = 6
@@ -406,16 +71,16 @@ def mod_dashboard():
     # Получаем список категорий для фильтра
     categories = IdeaCategory.query.filter_by(is_active=True).order_by(IdeaCategory.name).all()
     
-    return render_template('mod_dashboard.html', 
+    return render_template('dashboard.html', 
                          ideas=ideas,
                          pagination=pagination,
                          categories=categories,
                          sort_field=sort_field,
                          sort_direction=sort_direction)
+                         
 
 
-
-@app.route('/stats')
+@moderator_bp.route('/stats')
 @moderator_required
 def stats():
     """Страница статистики."""
@@ -444,7 +109,7 @@ def stats():
                          rejected_ideas=rejected_ideas)
 
 
-@app.route('/export-ideas')
+@moderator_bp.route('/export-ideas')
 @moderator_required
 def export_ideas():
     """Экспорт идей в Excel."""
@@ -528,11 +193,11 @@ def export_ideas():
     except Exception as e:
         current_app.logger.error(f"Ошибка при экспорте идей: {str(e)}")
         flash('Произошла ошибка при формировании отчета', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('public.index'))
 
 
 # Маршруты управления идеями (модератор)
-@app.route('/idea/<int:id>/toggle_publish', methods=['POST'])
+@moderator_bp.route('/idea/<int:id>/toggle_publish', methods=['POST'])
 @moderator_required
 def toggle_publish(id):
     """Переключение статуса публикации идеи."""
@@ -546,7 +211,7 @@ def toggle_publish(id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@app.route('/edit_idea/<int:id>', methods=['GET', 'POST'])
+@moderator_bp.route('/edit_idea/<int:id>', methods=['GET', 'POST'])
 @moderator_required
 def edit_idea(id):
     """Редактирование идеи модератором."""
@@ -576,7 +241,7 @@ def edit_idea(id):
         send_status_update_notification(idea, old_status, idea.status)
         
         flash('Изменения сохранены', 'success')
-        return redirect(url_for('idea_detail', id=id))
+        return redirect(url_for('public.idea_detail', id=id))
     
     # Убедимся, что поля формы заполнены текущими значениями
     form.moderator_feedback.data = idea.moderator_feedback
@@ -586,7 +251,7 @@ def edit_idea(id):
     return render_template('edit_idea.html', form=form, idea=idea)
 
 
-@app.route('/idea/<int:id>/approve', methods=['POST'])
+@moderator_bp.route('/idea/<int:id>/approve', methods=['POST'])
 @moderator_required
 def approve_idea(id):
     """Одобрение идеи."""
@@ -603,10 +268,10 @@ def approve_idea(id):
     except Exception as e:
         db.session.rollback()
         flash(f'Ошибка при одобрении идеи: {str(e)}', 'danger')
-    return redirect(url_for('idea_detail', id=id))
+    return redirect(url_for('public.idea_detail', id=id))
 
 
-@app.route('/idea/<int:id>/partially_approve', methods=['POST'])
+@moderator_bp.route('/idea/<int:id>/partially_approve', methods=['POST'])
 @moderator_required
 def partially_approve_idea(id):
     """Частичное одобрение идеи."""
@@ -623,10 +288,10 @@ def partially_approve_idea(id):
     except Exception as e:
         db.session.rollback()
         flash(f'Ошибка при частичном одобрении идеи: {str(e)}', 'danger')
-    return redirect(url_for('idea_detail', id=id))
+    return redirect(url_for('public.idea_detail', id=id))
 
 
-@app.route('/idea/<int:id>/reject', methods=['POST'])
+@moderator_bp.route('/idea/<int:id>/reject', methods=['POST'])
 @moderator_required
 def reject_idea(id):
     """Отклонение идеи."""
@@ -642,10 +307,10 @@ def reject_idea(id):
     except Exception as e:
         db.session.rollback()
         flash(f'Ошибка при отклонении идеи: {str(e)}', 'danger')
-    return redirect(url_for('idea_detail', id=id))
+    return redirect(url_for('public.idea_detail', id=id))
 
 
-@app.route('/idea/<int:id>/delete', methods=['POST'])
+@moderator_bp.route('/idea/<int:id>/delete', methods=['POST'])
 @moderator_required
 def delete_idea(id):
     """Удаление идеи."""
@@ -666,11 +331,11 @@ def delete_idea(id):
     except Exception as e:
         db.session.rollback()
         flash(f'Ошибка при удалении идеи: {str(e)}', 'danger')
-    return redirect(url_for('mod_dashboard'))
+    return redirect(url_for('moderator.dashboard'))
 
 
 # Маршруты управления категориями
-@app.route('/manage_categories')
+@moderator_bp.route('/manage_categories')
 @moderator_required
 def manage_categories():
     """Управление категориями идей."""
@@ -699,7 +364,7 @@ def manage_categories():
                         delete_form=delete_form)
 
 
-@app.route('/add_category', methods=['POST'])
+@moderator_bp.route('/add_category', methods=['POST'])
 @moderator_required
 def add_category():
     """Добавление новой категории."""
@@ -730,10 +395,10 @@ def add_category():
             for error in errors:
                 flash(f'{getattr(form, field).label.text}: {error}', 'danger')
                 
-    return redirect(url_for('manage_categories'))
+    return redirect(url_for('moderator.manage_categories'))
 
 
-@app.route('/edit_category/<int:id>', methods=['GET', 'POST'])
+@moderator_bp.route('/edit_category/<int:id>', methods=['GET', 'POST'])
 @moderator_required
 def edit_category(id):
     """Редактирование категории."""
@@ -771,7 +436,7 @@ def edit_category(id):
                 
                 db.session.commit()
                 flash('Категория успешно обновлена', 'success')
-                return redirect(url_for('manage_categories'))
+                return redirect(url_for('moderator.manage_categories'))
                 
         except Exception as e:
             db.session.rollback()
@@ -783,7 +448,7 @@ def edit_category(id):
                          ideas_count=ideas_count)
 
 
-@app.route('/delete_category/<int:id>', methods=['POST'])
+@moderator_bp.route('/delete_category/<int:id>', methods=['POST'])
 @moderator_required
 def delete_category(id):
     """Удаление категории."""
@@ -835,13 +500,4 @@ def delete_category(id):
     else:
         flash('Неверный запрос на удаление', 'danger')
         
-    return redirect(url_for('manage_categories'))
-
-
-# Точка входа
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        init_moderators()
-        init_categories()
-    app.run(debug=True)
+    return redirect(url_for('moderator.manage_categories'))

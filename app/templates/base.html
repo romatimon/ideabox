@@ -27,7 +27,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <!-- Логотип и кнопка мобильного меню -->
-            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('public.index') }}">
                 <i class="bi bi-lightbulb me-2"></i>
                 <span>РОСТЕСТ - Лаборатория идей</span>
             </a>
@@ -39,19 +39,19 @@
                 <ul class="navbar-nav ms-auto">
                     <!-- Основные пункты меню -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">
+                        <a class="nav-link" href="{{ url_for('public.index') }}">
                             <i class="bi bi-house me-1"></i> Главная
                         </a>
                     </li>
                     
                     {% if session.get('moderator_id') %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('mod_dashboard') }}">
+                            <a class="nav-link" href="{{ url_for('moderator.dashboard') }}">
                                 <i class="bi bi-speedometer2 me-1"></i> Кабинет
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('manage_categories') }}">
+                            <a class="nav-link" href="{{ url_for('moderator.manage_categories') }}">
                                 <i class="bi bi-tags me-1"></i> Категории
                             </a>
                         </li>
@@ -66,7 +66,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <a class="dropdown-item" href="{{ url_for('moderator_logout') }}">
+                                <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
                                     <i class="bi bi-box-arrow-right"></i> Выйти
                                 </a>
                             </li>
@@ -74,7 +74,7 @@
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('moderator_login') }}">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
                             <i class="bi bi-shield-lock me-1"></i> Вход для модераторов
                         </a>
                     </li>

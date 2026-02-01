@@ -66,13 +66,13 @@
                         </button>
 
                         <!-- Кнопка добавления идеи -->
-                        <a href="{{ url_for('add_idea') }}" class="btn btn-success flex-grow-1">
+                        <a href="{{ url_for('ideas.add_idea') }}" class="btn btn-success flex-grow-1">
                             <i class="bi bi-plus-lg me-1"></i> Добавить идею
                         </a>
 
                         {# Кнопка модерации (только для модераторов) #}
                         {% if 'moderator_id' in session %}
-                        <a href="{{ url_for('mod_dashboard') }}" class="btn btn-outline-primary flex-grow-1">
+                        <a href="{{ url_for('moderator.dashboard') }}" class="btn btn-outline-primary flex-grow-1">
                             <i class="bi bi-speedometer2 me-1"></i> Модерация
                         </a>
                         {% endif %}
@@ -125,7 +125,7 @@
                         {% endif %}
                     </div>
                     
-                    <a href="{{ url_for('idea_detail', id=idea.id) }}" class="btn btn-primary align-self-start">
+                    <a href="{{ url_for('public.idea_detail', id=idea.id) }}" class="btn btn-primary align-self-start">
                         Подробнее <i class="bi bi-arrow-right ms-1"></i>
                     </a>
                 </div>
@@ -140,11 +140,11 @@
             <i class="bi bi-lightbulb text-primary" style="font-size: 3rem;"></i>
             <h3 class="h5 mt-3 mb-2 text-primary">Идей не найдено</h3>
             <p class="mb-4 text-muted">Попробуйте изменить параметры фильтрации или добавьте первую идею</p>
-            <a href="{{ url_for('add_idea') }}" class="btn btn-primary px-4">
+            <a href="{{ url_for('ideas.add_idea') }}" class="btn btn-primary px-4">
                 <i class="bi bi-plus-lg me-2"></i>Добавить идею
             </a>
             {% if 'moderator_id' in session %}
-            <a href="{{ url_for('mod_dashboard') }}" class="btn btn-success px-4 ms-2">
+            <a href="{{ url_for('moderator.dashboard') }}" class="btn btn-success px-4 ms-2">
                 <i class="bi bi-speedometer2 me-1"></i> Кабинет модератора
             </a>
             {% endif %}
@@ -159,7 +159,7 @@
             {# Кнопка "Назад" #}
             {% if pagination.has_prev %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('index', 
+                <a class="page-link" href="{{ url_for('public.index', 
                     page=pagination.prev_num, 
                     status=current_status, 
                     category=current_category, 
@@ -177,7 +177,7 @@
 
             {# Всегда показываем первую страницу #}
             <li class="page-item {% if pagination.page == 1 %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('index', 
+                <a class="page-link" href="{{ url_for('public.index', 
                     page=1, 
                     status=current_status, 
                     category=current_category, 
@@ -197,7 +197,7 @@
             {% for p in range([2, pagination.page-1]|max, [pagination.pages-1, pagination.page+2]|min + 1) %}
                 {% if p > 1 and p < pagination.pages %}
                 <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('index', 
+                    <a class="page-link" href="{{ url_for('public.index', 
                         page=p, 
                         status=current_status, 
                         category=current_category, 
@@ -218,7 +218,7 @@
             {# Всегда показываем последнюю страницу (если она не первая) #}
             {% if pagination.pages > 1 %}
             <li class="page-item {% if pagination.page == pagination.pages %}active{% endif %}">
-                <a class="page-link" href="{{ url_for('index', 
+                <a class="page-link" href="{{ url_for('public.index', 
                     page=pagination.pages, 
                     status=current_status, 
                     category=current_category, 
@@ -231,7 +231,7 @@
             {# Кнопка "Вперед" #}
             {% if pagination.has_next %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('index', 
+                <a class="page-link" href="{{ url_for('public.index', 
                     page=pagination.next_num, 
                     status=current_status, 
                     category=current_category, 
