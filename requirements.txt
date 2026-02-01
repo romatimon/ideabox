@@ -1,26 +1,21 @@
-# Веб-фреймворк для создания приложений
-Flask==3.0.0
-
-# Расширение для работы с формами и защитой от CSRF
-Flask-WTF==1.2.1
-
-# Основная библиотека Flask для маршрутизации и сервера
-Werkzeug==3.0.1
-
-# ORM для работы с базой данных
-SQLAlchemy==2.0.23
-
-# Интеграция SQLAlchemy с Flask
-Flask-SQLAlchemy==3.1.1
-
-# Работа с файлами Excel (.xlsx)
-openpyxl==3.1.2
-
-# Проверка корректности email-адресов
+blinker==1.9.0
+click==8.3.1
+colorama==0.4.6
+dnspython==2.8.0
 email-validator==2.0.0.post2
-
-# Загружает переменные окружения из файла .env
+et_xmlfile==2.0.0
+Flask==3.0.0
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.1
+greenlet==3.3.1
+idna==3.11
+itsdangerous==2.2.0
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+openpyxl==3.1.2
 python-dotenv==1.0.0
-
-# Управление входом и сессиями пользователей
-flask-login==0.6.3
+SQLAlchemy==2.0.31
+typing_extensions==4.15.0
+Werkzeug==3.0.1
+WTForms==3.2.1
