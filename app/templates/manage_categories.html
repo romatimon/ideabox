@@ -9,7 +9,7 @@
             <h2 class="h4 mb-0 d-flex align-items-center">
                 <i class="bi bi-tags me-2"></i>
                 <span>Управление категориями</span>
-                <a href="{{ url_for('mod_dashboard') }}" class="btn btn-sm ms-auto" 
+                <a href="{{ url_for('moderator.dashboard') }}" class="btn btn-sm ms-auto" 
                    style="background-color: white; color: var(--primary-color);">
                     <i class="bi bi-arrow-left me-1"></i> Назад к идеям
                 </a>
@@ -20,7 +20,7 @@
             <!-- Форма добавления -->
             <div class="mb-5">
                 <h4 class="mb-3" style="color: var(--primary-color);">Добавить новую категорию</h4>
-                <form method="POST" action="{{ url_for('add_category') }}">
+                <form method="POST" action="{{ url_for('moderator.add_category') }}">
                     {{ add_form.hidden_tag() }}
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -79,14 +79,14 @@
                                 <td>
                                     <div class="d-flex gap-2">
                                         <!-- Кнопка редактирования -->
-                                        <a href="{{ url_for('edit_category', id=category.id) }}" 
+                                        <a href="{{ url_for('moderator.edit_category', id=category.id) }}" 
                                         class="btn btn-sm btn-outline-primary" 
                                         title="Редактировать категорию">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         
                                         <!-- Форма удаления -->
-                                        <form method="POST" action="{{ url_for('delete_category', id=category.id) }}"
+                                        <form method="POST" action="{{ url_for('moderator.delete_category', id=category.id) }}"
                                             onsubmit="return confirm('Удалить категорию «{{ category.name }}»? Все идеи будут автоматически перемещены в другую активную категорию.')">
                                             {{ delete_form.hidden_tag() }}
                                             <button type="submit" 

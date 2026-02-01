@@ -1,8 +1,18 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from config import SMTP_SERVER, SMTP_PORT, FROM_EMAIL, EMAIL_PASSWORD, MODERATOR_EMAIL
+from config import Config
 import logging
+
+
+# Используем значения из класса Config
+SMTP_SERVER = Config.SMTP_SERVER
+SMTP_PORT = Config.SMTP_PORT
+FROM_EMAIL = Config.FROM_EMAIL
+EMAIL_PASSWORD = Config.EMAIL_PASSWORD
+MODERATOR_EMAIL = Config.MODERATOR_EMAIL
+
+
 
 # Настройка логирования
 logger = logging.getLogger(__name__)

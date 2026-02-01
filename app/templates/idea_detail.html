@@ -9,7 +9,7 @@
                 <h2 class="h4 mb-0">
                     <i class="bi bi-lightbulb"></i> {{ idea.title }}
                 </h2>
-                <a href="{{ url_for('index') }}" class="btn btn-sm btn-light">
+                <a href="{{ url_for('public.index') }}" class="btn btn-sm btn-light">
                     <i class="bi bi-arrow-left"></i> Назад
                 </a>
             </div>
@@ -58,12 +58,12 @@
                 <!-- Основные действия с идеей -->
                 <div class="d-flex flex-wrap gap-2 mb-3">
                     <!-- Кнопка редактирования -->
-                    <a href="{{ url_for('edit_idea', id=idea.id) }}" class="btn btn-warning btn-sm">
+                    <a href="{{ url_for('moderator.edit_idea', id=idea.id) }}" class="btn btn-warning btn-sm">
                         <i class="bi bi-pencil"></i> Редактировать
                     </a>
                     
                     <!-- Форма для одобрения -->
-                    <form method="POST" action="{{ url_for('approve_idea', id=idea.id) }}">
+                    <form method="POST" action="{{ url_for('moderator.approve_idea', id=idea.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-success btn-sm" aria-label="Одобрить идею">
                             <i class="bi bi-check-circle"></i> Одобрить
@@ -71,7 +71,7 @@
                     </form>
                     
                     <!-- Форма для частичного одобрения -->
-                    <form method="POST" action="{{ url_for('partially_approve_idea', id=idea.id) }}">
+                    <form method="POST" action="{{ url_for('moderator.partially_approve_idea', id=idea.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-info btn-sm" aria-label="Одобрить частично">
                             <i class="bi bi-check-circle-half"></i> Частично одобрить
@@ -79,14 +79,14 @@
                     </form>
 
                     <!-- Форма для отклонения -->
-                    <form method="POST" action="{{ url_for('reject_idea', id=idea.id) }}">
+                    <form method="POST" action="{{ url_for('moderator.reject_idea', id=idea.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-warning btn-sm">
                             <i class="bi bi-slash-circle"></i> Отклонить
                         </button>
                     </form>
                     
-                    <form method="POST" action="{{ url_for('delete_idea', id=idea.id) }}" 
+                    <form method="POST" action="{{ url_for('moderator.delete_idea', id=idea.id) }}" 
                         onsubmit="return confirm('Вы уверены, что хотите удалить эту идею?');">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-danger btn-sm">
@@ -197,7 +197,7 @@
                                 {% endif %}
                             </small>
                         </div>
-                        <a href="{{ url_for('download_attachment', id=attachment.id) }}" 
+                        <a href="{{ url_for('ideas.download_attachment', id=attachment.id) }}" 
                             class="btn btn-sm btn-primary"
                             target="_blank">
                             <i class="bi bi-download"></i> Скачать

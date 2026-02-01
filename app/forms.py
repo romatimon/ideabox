@@ -6,7 +6,7 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired, Length, Optional, Email
 
-from models import IdeaCategory, Idea
+from .models import IdeaCategory, Idea
 
 
 class IdeaForm(FlaskForm):
